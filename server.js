@@ -9,7 +9,6 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-// salaId → GameManager
 const salas = {};
 
 function obterOuCriarSala(salaId) {
@@ -24,16 +23,13 @@ io.on("connection", (socket) => {
 
   socket.on("entrar_sala", ({ sala, nome }) => {
     if (!sala || !nome) return;
-
     salaAtual = sala.toUpperCase().trim();
     const game = obterOuCriarSala(salaAtual);
-
     const resultado = game.entrar(socket.id, nome.trim());
     if (resultado.erro) {
       socket.emit("erro", resultado.erro);
       return;
     }
-
     socket.join(salaAtual);
     socket.emit("entrou_sala", { sala: salaAtual });
   });
@@ -43,19 +39,9 @@ io.on("connection", (socket) => {
     salas[salaAtual].marcarPronto(socket.id);
   });
 
-  socket.on("acao_noite", ({ alvoId }) => {
+  socket.on("submeter_monster", (dados) => {
     if (!salaAtual || !salas[salaAtual]) return;
-    salas[salaAtual].registrarAcaoNoite(socket.id, alvoId);
-  });
-
-  socket.on("votar", ({ alvoId }) => {
-    if (!salaAtual || !salas[salaAtual]) return;
-    salas[salaAtual].registrarVoto(socket.id, alvoId);
-  });
-
-  socket.on("tiro_cacador", ({ alvoId }) => {
-    if (!salaAtual || !salas[salaAtual]) return;
-    salas[salaAtual].registrarTiroCacador(socket.id, alvoId);
+    salas[salaAtual].submeterMonstro(socket.id, dados);
   });
 
   socket.on("disconnect", () => {
@@ -66,5 +52,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🧛 Caça Vampiros rodando em http://localhost:${PORT}`);
+  console.log(`🐉 Monster Lab rodando em http://localhost:${PORT}`);
 });

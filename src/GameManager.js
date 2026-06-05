@@ -1,43 +1,38 @@
-const { ROLES, distribuirPapeis } = require("./roles");
+const { PECAS, SLOTS, calcularStats } = require("./pieces");
+const { verificarCombos } = require("./combos");
+const { batalhar, gerarConfrontos } = require("./CombatEngine");
 
 const FASE = {
   LOBBY: "lobby",
-  NOITE: "noite",
-  AMANHECER: "amanhecer",
-  DISCUSSAO: "discussao",
-  JULGAMENTO: "julgamento",
-  FIM: "fim",
+  CRIACAO: "criacao",
+  REVELACAO: "revelacao",
+  COMBATE: "combate",
+  RESULTADO: "resultado",
 };
 
-const MIN_JOGADORES = 4;
-const MAX_JOGADORES = 10;
-const DURACAO_DISCUSSAO = 120; // segundos
-const DURACAO_DEFESA = 30;
+const DURACAO_CRIACAO = 60;
+const MIN_JOGADORES = 2;
+const MAX_JOGADORES = 8;
 
 class GameManager {
   constructor(salaId, io) {
     this.salaId = salaId;
     this.io = io;
-    this.jogadores = {}; // socketId → { id, nome, papel, vivo, pronto }
+    this.jogadores = {}; // socketId → { id, nome, pronto, monster }
     this.fase = FASE.LOBBY;
-    this.noite = 0;
-    this.acoesNoite = {}; // socketId → alvoId
-    this.votos = {};      // socketId → alvoId
-    this.acusado = null;
     this.timer = null;
-    this.mortesPendentes = []; // mensagens de morte acumuladas na noite
+    this.pontuacao = {}; // socketId → vitorias
   }
 
   // ── Lobby ──────────────────────────────────────────────────────────────────
 
   entrar(socketId, nome) {
-    if (Object.keys(this.jogadores).length >= MAX_JOGADORES) {
+    if (Object.keys(this.jogadores).length >= MAX_JOGADORES)
       return { erro: "Sala cheia." };
-    }
-    if (this.fase !== FASE.LOBBY) {
+    if (this.fase !== FASE.LOBBY)
       return { erro: "Partida já em andamento." };
-    }
-    this.jogadores[socketId] = { id: socketId, nome, papel: null, vivo: true, pronto: false };
+
+    this.jogadores[socketId] = { id: socketId, nome: nome.trim(), pronto: false, monster: null };
     this._broadcast("sala_atualizada", this._estadoLobby());
     return { ok: true };
   }
@@ -46,10 +41,6 @@ class GameManager {
     delete this.jogadores[socketId];
     if (this.fase === FASE.LOBBY) {
       this._broadcast("sala_atualizada", this._estadoLobby());
-    } else {
-      // Trata como morte durante a partida
-      this._marcarMorto(socketId);
-      this._verificarVitoria();
     }
   }
 
@@ -58,314 +49,183 @@ class GameManager {
     this.jogadores[socketId].pronto = true;
     this._broadcast("sala_atualizada", this._estadoLobby());
 
-    const vivos = Object.values(this.jogadores);
-    const todosProntos = vivos.length >= MIN_JOGADORES && vivos.every((j) => j.pronto);
-    if (todosProntos) this._iniciarPartida();
+    const lista = Object.values(this.jogadores);
+    if (lista.length >= MIN_JOGADORES && lista.every((j) => j.pronto)) {
+      setTimeout(() => this._iniciarCriacao(), 500);
+    }
   }
 
-  // ── Início ─────────────────────────────────────────────────────────────────
+  // ── Criação ────────────────────────────────────────────────────────────────
 
-  _iniciarPartida() {
-    const ids = Object.keys(this.jogadores);
-    const papeis = distribuirPapeis(ids.length);
-    if (!papeis) return;
+  _iniciarCriacao() {
+    this.fase = FASE.CRIACAO;
 
-    ids.forEach((id, i) => {
-      this.jogadores[id].papel = papeis[i];
+    // Envia catálogo de peças para o cliente
+    const catalogo = {};
+    SLOTS.forEach((slot) => {
+      catalogo[slot] = Object.values(PECAS)
+        .filter((p) => p.slot === slot)
+        .map((p) => ({ id: p.id, nome: p.nome, emoji: p.emoji, raridade: p.raridade, tipo: p.tipo, stats: p.stats, descricao: p.descricao }));
     });
 
-    this._broadcast("partida_iniciada", { totalJogadores: ids.length });
+    this._broadcast("fase_criacao", { duracao: DURACAO_CRIACAO, catalogo });
 
-    // Envia papel individual para cada jogador
-    ids.forEach((id) => {
-      const j = this.jogadores[id];
-      const role = ROLES[j.papel];
-      // Vampiros conhecem uns aos outros
-      const aliados =
-        role.faccao === "vampiros"
-          ? Object.values(this.jogadores)
-              .filter((x) => x.papel === "VAMPIRO" && x.id !== id)
-              .map((x) => x.nome)
-          : [];
-
-      this.io.to(id).emit("seu_papel", {
-        papel: role,
-        aliados,
-      });
-    });
-
-    setTimeout(() => this._iniciarNoite(), 3000);
-  }
-
-  // ── Noite ──────────────────────────────────────────────────────────────────
-
-  _iniciarNoite() {
-    this.fase = FASE.NOITE;
-    this.noite++;
-    this.acoesNoite = {};
-    this.mortesPendentes = [];
-
-    const alvosVivos = this._jogadoresVivos().map((j) => ({ id: j.id, nome: j.nome }));
-
-    this._broadcast("fase_noite", { noite: this.noite });
-
-    // Envia ação específica para cada papel
-    this._jogadoresVivos().forEach((j) => {
-      const role = ROLES[j.papel];
-      if (!role.acaoNoite) return;
-
-      const alvos = alvosVivos.filter((a) => a.id !== j.id);
-      this.io.to(j.id).emit("acao_noite", {
-        papel: j.papel,
-        alvos,
-        instrucao: this._instrucaoNoite(j.papel),
-      });
-    });
-  }
-
-  _instrucaoNoite(papel) {
-    const map = {
-      VAMPIRO: "Escolha uma vítima para atacar.",
-      CACADOR_VAMPIROS: "Escolha alguém para investigar.",
-      MEDICO: "Escolha alguém para proteger.",
-    };
-    return map[papel] || "";
-  }
-
-  registrarAcaoNoite(socketId, alvoId) {
-    if (this.fase !== FASE.NOITE) return;
-    const jogador = this.jogadores[socketId];
-    if (!jogador || !jogador.vivo) return;
-
-    this.acoesNoite[socketId] = alvoId;
-    this.io.to(socketId).emit("acao_confirmada");
-
-    // Verifica se todos que podem agir já agiram
-    const podamAgir = this._jogadoresVivos().filter((j) => ROLES[j.papel].acaoNoite);
-    const todos = podamAgir.every((j) => this.acoesNoite[j.id] !== undefined);
-    if (todos) this._resolverNoite();
-  }
-
-  _resolverNoite() {
-    const protegido = this._acaoPor("MEDICO");
-    const alvoVampiro = this._acaoPor("VAMPIRO");
-    const investigado = this._acaoPor("CACADOR_VAMPIROS");
-
-    // Resultado da investigação (privado)
-    if (investigado) {
-      const alvo = this.jogadores[investigado];
-      const cacador = this._jogadorComPapel("CACADOR_VAMPIROS");
-      if (cacador) {
-        const suspeito = ROLES[alvo.papel].faccao === "vampiros";
-        this.io.to(cacador.id).emit("resultado_investigacao", {
-          nome: alvo.nome,
-          suspeito,
-        });
+    let restante = DURACAO_CRIACAO;
+    this.timer = setInterval(() => {
+      restante--;
+      this._broadcast("timer_criacao", { restante });
+      if (restante <= 0) {
+        clearInterval(this.timer);
+        this._autoCompletarMonstros();
+        this._iniciarRevelacao();
       }
-    }
-
-    // Ataque do vampiro
-    if (alvoVampiro && alvoVampiro !== protegido) {
-      this._marcarMorto(alvoVampiro);
-      const morto = this.jogadores[alvoVampiro];
-      this.mortesPendentes.push({ nome: morto ? morto.nome : "Alguém", razao: "ataque" });
-    }
-
-    this._iniciarAmanhecer();
+    }, 1000);
   }
 
-  _acaoPor(papel) {
-    const jogador = this._jogadorComPapel(papel);
-    if (!jogador) return null;
-    return this.acoesNoite[jogador.id] || null;
-  }
-
-  // ── Amanhecer ──────────────────────────────────────────────────────────────
-
-  _iniciarAmanhecer() {
-    this.fase = FASE.AMANHECER;
-
-    const mensagens =
-      this.mortesPendentes.length > 0
-        ? this.mortesPendentes.map((m) => `${m.nome} foi encontrado(a) sem vida.`)
-        : ["Ninguém morreu esta noite."];
-
-    this._broadcast("amanhecer", { mensagens, noite: this.noite });
-
-    if (this._verificarVitoria()) return;
-
-    setTimeout(() => this._iniciarDiscussao(), 4000);
-  }
-
-  // ── Discussão ──────────────────────────────────────────────────────────────
-
-  _iniciarDiscussao() {
-    this.fase = FASE.DISCUSSAO;
-    this.votos = {};
-    this.acusado = null;
-
-    this._broadcast("fase_discussao", {
-      duracao: DURACAO_DISCUSSAO,
-      jogadores: this._jogadoresVivos().map((j) => ({ id: j.id, nome: j.nome })),
-    });
-
-    this.timer = setTimeout(() => this._iniciarVotacao(), DURACAO_DISCUSSAO * 1000);
-  }
-
-  registrarVoto(socketId, alvoId) {
-    if (this.fase !== FASE.DISCUSSAO) return;
-    if (!this.jogadores[socketId]?.vivo) return;
-    this.votos[socketId] = alvoId;
-
-    this._broadcast("votos_atualizados", this._contarVotos());
-
-    const totalVivos = this._jogadoresVivos().length;
-    const totalVotos = Object.keys(this.votos).length;
-    if (totalVotos >= totalVivos) {
-      clearTimeout(this.timer);
-      this._iniciarVotacao();
-    }
-  }
-
-  // ── Julgamento ─────────────────────────────────────────────────────────────
-
-  _iniciarVotacao() {
-    this.fase = FASE.JULGAMENTO;
-
-    const contagem = this._contarVotos();
-    const maisVotado = contagem[0];
-
-    if (!maisVotado || maisVotado.votos === 0) {
-      this._broadcast("sem_execucao", {});
-      setTimeout(() => this._iniciarNoite(), 3000);
-      return;
-    }
-
-    // Empate → ninguém é executado
-    if (contagem.length > 1 && contagem[0].votos === contagem[1].votos) {
-      this._broadcast("empate_execucao", {});
-      setTimeout(() => this._iniciarNoite(), 3000);
-      return;
-    }
-
-    this.acusado = maisVotado.id;
-    const acusadoObj = this.jogadores[this.acusado];
-
-    this._broadcast("fase_julgamento", {
-      acusado: { id: this.acusado, nome: acusadoObj.nome },
-      duracao: DURACAO_DEFESA,
-    });
-
-    // Após defesa, executa
-    this.timer = setTimeout(() => this._executar(this.acusado), DURACAO_DEFESA * 1000);
-  }
-
-  _executar(socketId) {
+  submeterMonstro(socketId, { nome, pecas }) {
+    if (this.fase !== FASE.CRIACAO) return;
     const jogador = this.jogadores[socketId];
     if (!jogador) return;
 
-    this._marcarMorto(socketId);
-    const role = ROLES[jogador.papel];
+    // Valida: um de cada slot obrigatório (exceto asas)
+    const slots = { cabeca: null, corpo: null, membros: null, asas: "asas_nenhuma" };
+    for (const id of pecas) {
+      const peca = PECAS[id];
+      if (peca) slots[peca.slot] = id;
+    }
+    if (!slots.cabeca || !slots.corpo || !slots.membros) return;
 
-    this._broadcast("executado", {
-      nome: jogador.nome,
-      papel: role,
+    const pecaIds = Object.values(slots).filter(Boolean);
+    const { stats, efeitos, tipos } = calcularStats(pecaIds);
+    const combos = verificarCombos(pecaIds);
+
+    // Aplica bônus dos combos
+    for (const combo of combos) {
+      stats.hp  += combo.bonus.hp;
+      stats.atk += combo.bonus.atk;
+      stats.def += combo.bonus.def;
+      stats.spd += combo.bonus.spd;
+      for (const ef of combo.efeitos) {
+        if (!efeitos.includes(ef)) efeitos.push(ef);
+      }
+    }
+
+    jogador.monster = {
+      jogadorId: socketId,
+      jogadorNome: jogador.nome,
+      nome: nome || `Monstro de ${jogador.nome}`,
+      pecas: slots,
+      stats,
+      efeitos,
+      tipos,
+      combos: combos.map((c) => ({ id: c.id, nome: c.nome, emoji: c.emoji, descricao: c.descricao })),
+    };
+
+    this.io.to(socketId).emit("monster_confirmado", { monster: jogador.monster });
+
+    // Se todos já submeteram, adianta
+    if (Object.values(this.jogadores).every((j) => j.monster)) {
+      clearInterval(this.timer);
+      this._iniciarRevelacao();
+    }
+  }
+
+  _autoCompletarMonstros() {
+    const defaultPecas = ["cabeca_lobo", "corpo_ogro", "membros_garras", "asas_nenhuma"];
+    for (const j of Object.values(this.jogadores)) {
+      if (j.monster) continue;
+      const { stats, efeitos, tipos } = calcularStats(defaultPecas);
+      j.monster = {
+        jogadorId: j.id,
+        jogadorNome: j.nome,
+        nome: `Monstro de ${j.nome}`,
+        pecas: { cabeca: defaultPecas[0], corpo: defaultPecas[1], membros: defaultPecas[2], asas: defaultPecas[3] },
+        stats,
+        efeitos,
+        tipos,
+        combos: [],
+      };
+    }
+  }
+
+  // ── Revelação ──────────────────────────────────────────────────────────────
+
+  _iniciarRevelacao() {
+    this.fase = FASE.REVELACAO;
+    const monstros = Object.values(this.jogadores).map((j) => j.monster);
+    this._broadcast("fase_revelacao", { monstros });
+    setTimeout(() => this._iniciarTorneio(), 6000);
+  }
+
+  // ── Torneio ────────────────────────────────────────────────────────────────
+
+  _iniciarTorneio() {
+    this.fase = FASE.COMBATE;
+
+    const jogadores = Object.values(this.jogadores);
+    const confrontos = gerarConfrontos(jogadores.map((j) => j.monster));
+
+    // Inicializa pontuação
+    jogadores.forEach((j) => { this.pontuacao[j.id] = 0; });
+
+    this._broadcast("fase_combate", {
+      totalConfrontos: confrontos.length,
+      nomes: jogadores.map((j) => j.nome),
     });
 
-    if (this._verificarVitoria()) return;
+    // Executa confrontos sequencialmente com pausa entre eles
+    this._executarConfrontos(confrontos, 0);
+  }
 
-    // Habilidade do Caçador ao morrer
-    if (jogador.papel === "CACADOR") {
-      this.io.to(socketId).emit("habilidade_cacador", {
-        alvos: this._jogadoresVivos().map((j) => ({ id: j.id, nome: j.nome })),
-      });
-      // Espera 15s para o caçador agir ou segue em frente
-      this.timer = setTimeout(() => this._iniciarNoite(), 15000);
+  _executarConfrontos(confrontos, index) {
+    if (index >= confrontos.length) {
+      setTimeout(() => this._encerrar(), 2000);
       return;
     }
 
-    setTimeout(() => this._iniciarNoite(), 4000);
-  }
+    const [monsterA, monsterB] = confrontos[index];
+    const resultado = batalhar(monsterA, monsterB);
 
-  registrarTiroCacador(cacadorId, alvoId) {
-    clearTimeout(this.timer);
-    const alvo = this.jogadores[alvoId];
-    if (!alvo || !alvo.vivo) {
-      setTimeout(() => this._iniciarNoite(), 2000);
-      return;
+    if (resultado.vencedor && this.pontuacao[resultado.vencedor] !== undefined) {
+      this.pontuacao[resultado.vencedor]++;
     }
-    this._marcarMorto(alvoId);
-    this._broadcast("tiro_cacador", {
-      nomeCacador: this.jogadores[cacadorId]?.nome || "Caçador",
-      nomeAlvo: alvo.nome,
-      papel: ROLES[alvo.papel],
+
+    this._broadcast("resultado_batalha", {
+      confrontoAtual: index + 1,
+      total: confrontos.length,
+      nomeA: monsterA.nome,
+      nomeB: monsterB.nome,
+      log: resultado.log,
+      vencedor: resultado.vencedor
+        ? (this.jogadores[resultado.vencedor]?.nome || "?")
+        : "Empate",
     });
-    if (this._verificarVitoria()) return;
-    setTimeout(() => this._iniciarNoite(), 4000);
+
+    setTimeout(() => this._executarConfrontos(confrontos, index + 1), 3000);
   }
 
-  // ── Vitória ────────────────────────────────────────────────────────────────
+  // ── Resultado ──────────────────────────────────────────────────────────────
 
-  _verificarVitoria() {
-    const vivos = this._jogadoresVivos();
-    const vampiros = vivos.filter((j) => ROLES[j.papel].faccao === "vampiros");
-    const cidade = vivos.filter((j) => ROLES[j.papel].faccao === "cidade");
+  _encerrar() {
+    this.fase = FASE.RESULTADO;
 
-    if (vampiros.length === 0) {
-      this._encerrar("cidade", "Todos os vampiros foram eliminados!");
-      return true;
-    }
-    if (vampiros.length >= cidade.length) {
-      this._encerrar("vampiros", "Os vampiros dominaram a cidade!");
-      return true;
-    }
-    return false;
-  }
+    const ranking = Object.values(this.jogadores)
+      .map((j) => ({
+        nome: j.nome,
+        monster: j.monster,
+        vitorias: this.pontuacao[j.id] || 0,
+      }))
+      .sort((a, b) => b.vitorias - a.vitorias);
 
-  _encerrar(vencedor, mensagem) {
-    this.fase = FASE.FIM;
-    clearTimeout(this.timer);
-
-    const resultado = Object.values(this.jogadores).map((j) => ({
-      nome: j.nome,
-      papel: ROLES[j.papel],
-      vivo: j.vivo,
-    }));
-
-    this._broadcast("fim_de_jogo", { vencedor, mensagem, resultado });
+    this._broadcast("resultado_final", { ranking });
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-
-  _marcarMorto(socketId) {
-    if (this.jogadores[socketId]) {
-      this.jogadores[socketId].vivo = false;
-    }
-  }
-
-  _jogadoresVivos() {
-    return Object.values(this.jogadores).filter((j) => j.vivo);
-  }
-
-  _jogadorComPapel(papel) {
-    return Object.values(this.jogadores).find((j) => j.papel === papel && j.vivo) || null;
-  }
-
-  _contarVotos() {
-    const contagem = {};
-    Object.values(this.votos).forEach((alvoId) => {
-      contagem[alvoId] = (contagem[alvoId] || 0) + 1;
-    });
-    return Object.entries(contagem)
-      .map(([id, votos]) => ({ id, nome: this.jogadores[id]?.nome, votos }))
-      .sort((a, b) => b.votos - a.votos);
-  }
 
   _estadoLobby() {
     return {
       jogadores: Object.values(this.jogadores).map((j) => ({ nome: j.nome, pronto: j.pronto })),
       min: MIN_JOGADORES,
-      max: MAX_JOGADORES,
     };
   }
 
@@ -374,4 +234,4 @@ class GameManager {
   }
 }
 
-module.exports = { GameManager, FASE };
+module.exports = { GameManager };
