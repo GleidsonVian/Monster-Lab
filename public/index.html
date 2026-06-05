@@ -1,217 +1,888 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🐉 Monster Lab</title>
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🐉 Monster Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--card:#111827;--border:#1e2d40;
+  --accent:#22c55e;--accent2:#f59e0b;--danger:#ef4444;
+  --text:#e2e8f0;--muted:#64748b;--rare:#a855f7;--legendary:#f59e0b;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse at 20% 50%,rgba(34,197,94,.04) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(168,85,247,.06) 0%,transparent 60%)}
+.tela{display:none;width:100%;padding:16px;justify-content:center}
+.tela.ativa{display:flex}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:32px 28px;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.5);
+  width:100%;max-width:520px}
+.card.wide{max-width:800px}
+h1{font-size:2.2rem;font-weight:800;color:var(--accent2);margin-bottom:4px}
+h2{font-size:1.5rem;font-weight:700;color:var(--accent2);margin-bottom:16px}
+.sub{color:var(--muted);font-size:.85rem;margin-bottom:20px}
+.info{color:var(--muted);font-size:.85rem;margin:6px 0}
+input[type=text]{width:100%;padding:12px 16px;margin:7px 0;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;
+  font-family:inherit;outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--muted)}
+button{width:100%;padding:12px;margin-top:9px;background:var(--accent);color:#0a0e1a;
+  border:none;border-radius:10px;font-size:.95rem;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:background .2s,transform .1s}
+button:hover{background:#16a34a}
+button:active{transform:scale(.98)}
+button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
+.btn-roxo{background:linear-gradient(135deg,#7c3aed,#a855f7)!important;color:#fff!important}
+.btn-roxo:hover{background:linear-gradient(135deg,#6d28d9,#9333ea)!important}
+.btn-sec{background:rgba(255,255,255,.06)!important;color:var(--text)!important;border:1px solid var(--border)!important}
+.btn-sec:hover{background:rgba(255,255,255,.1)!important}
+
+/* Status de conexão */
+.status-conexao{font-size:.78rem;padding:4px 12px;border-radius:99px;
+  display:inline-block;margin-bottom:16px}
+.status-conexao.online{background:rgba(34,197,94,.15);color:var(--accent);border:1px solid rgba(34,197,94,.3)}
+.status-conexao.offline{background:rgba(100,116,139,.15);color:var(--muted);border:1px solid rgba(100,116,139,.3)}
+
+/* Modo btns */
+.modo-btns{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+
+/* Dificuldade */
+.dif-opcoes{display:flex;flex-direction:column;gap:8px}
+.btn-dif{display:flex;align-items:center;gap:12px;padding:12px 16px;text-align:left;
+  background:rgba(255,255,255,.03);border:2px solid var(--border);border-radius:11px;
+  color:var(--text);cursor:pointer;transition:all .15s;width:100%;margin:0;font-weight:400}
+.btn-dif:hover{border-color:var(--accent);background:rgba(34,197,94,.07)}
+.dif-e{font-size:1.6rem;flex-shrink:0}
+.dif-n{font-weight:700;font-size:.95rem;display:block}
+.dif-d{font-size:.78rem;color:var(--muted);display:block}
+
+/* Layout criação/draft */
+.cl{display:flex;gap:0;width:100%;max-width:880px;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.cl-head{display:flex;justify-content:space-between;align-items:center;
+  padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.cl-head h2{margin:0;font-size:1.3rem}
+.rl-badge{font-size:.78rem;font-weight:700;color:var(--rare);
+  background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);
+  padding:4px 12px;border-radius:99px}
+.timer-box{font-size:1.2rem;font-weight:700;color:var(--accent2);
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);
+  padding:4px 14px;border-radius:99px}
+.timer-box.urgente{color:var(--danger);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.1)}
+.cl-body{display:flex}
+.p-pecas{flex:1;padding:18px 22px;border-right:1px solid var(--border);
+  overflow-y:auto;max-height:calc(100vh - 110px)}
+.nome-row{margin-bottom:16px}
+.slot-g{margin-bottom:16px}
+.slot-t{font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:7px}
+.slot-o{display:flex;flex-wrap:wrap;gap:6px}
+.pb{display:flex;flex-direction:column;align-items:center;padding:9px 9px 7px;gap:2px;
+  background:rgba(255,255,255,.03);border:2px solid var(--border);border-radius:10px;
+  cursor:pointer;min-width:94px;max-width:108px;text-align:center;
+  width:auto;margin:0;font-weight:400;color:var(--text);transition:all .15s}
+.pb:hover{border-color:var(--accent);background:rgba(34,197,94,.06)}
+.pb.sel{border-color:var(--accent);background:rgba(34,197,94,.12)}
+.pb.rara{border-color:rgba(168,85,247,.35)}
+.pb.rara:hover,.pb.rara.sel{border-color:var(--rare);background:rgba(168,85,247,.12)}
+.pb.lendaria{border-color:rgba(245,158,11,.35)}
+.pb.lendaria:hover,.pb.lendaria.sel{border-color:var(--legendary);background:rgba(245,158,11,.1)}
+.pe{font-size:1.5rem}.pn{font-size:.68rem;line-height:1.2;margin:2px 0}
+.br{font-size:.55rem;padding:1px 4px;border-radius:4px;margin-bottom:3px}
+.br.comum{background:rgba(148,163,184,.15);color:var(--muted)}
+.br.rara{background:rgba(168,85,247,.2);color:var(--rare)}
+.br.lendaria{background:rgba(245,158,11,.2);color:var(--legendary)}
+.peca-stats{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:3px}
+.ps-t{font-size:.58rem;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.07);color:var(--text)}
+.p-prev{width:230px;flex-shrink:0;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.mcard{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;padding:16px 14px;text-align:center}
+.mcard-e{font-size:1.9rem;margin-bottom:7px;letter-spacing:3px}
+.mcard-n{font-size:.92rem;font-weight:700;color:var(--accent2);margin-bottom:10px}
+.mcard-s{display:flex;flex-direction:column;gap:5px}
+.mst{display:flex;justify-content:space-between;font-size:.8rem}
+.msl{color:var(--muted)}
+.combo-tag{padding:5px 9px;border-radius:7px;font-size:.72rem;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);
+  color:var(--accent2);text-align:left;margin-top:4px}
+.combo-tag strong{display:block;font-size:.75rem;margin-bottom:1px}
+
+/* Lobby */
+#lista-lobby{list-style:none;margin:12px 0;text-align:left}
+#lista-lobby li{padding:9px 14px;margin:5px 0;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);border-radius:9px;display:flex;justify-content:space-between}
+#lista-lobby li.pronto::after{content:"✓";color:var(--accent);font-weight:700}
+
+/* Pré-combate */
+.zona-h{font-size:1.2rem;font-weight:700;color:var(--accent2);margin-bottom:4px}
+.rodada-i{font-size:.82rem;color:var(--muted);margin-bottom:16px}
+.boss-av{color:var(--danger);font-weight:700}
+.vs-pre{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.mvc{flex:1;min-width:155px;max-width:210px;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+.mvc.enemy{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.03)}
+.mvc.boss{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.04)}
+.mvc-e{font-size:1.9rem;margin-bottom:6px}
+.mvc-n{font-weight:700;color:var(--accent2);font-size:.88rem;margin-bottom:7px}
+.mvc-s{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.sp{font-size:.68rem;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.06)}
+.vs-sep{font-size:1.8rem;font-weight:900;color:var(--danger);flex-shrink:0}
+
+/* Combate */
+.vs-h{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px}
+.fn{font-size:1.1rem;font-weight:700}
+.vs-l{font-size:1.4rem;font-weight:900;color:var(--danger)}
+.hp-bars{display:flex;gap:10px;margin-bottom:12px}
+.hp-wrap{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.hp-fill{height:100%;width:100%;background:var(--accent);border-radius:99px;transition:width .3s,background .3s}
+.hp-fill.low{background:var(--danger)}
+#log{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;
+  padding:7px;background:rgba(0,0,0,.3);border-radius:9px;margin-bottom:10px}
+.ll{padding:4px 8px;border-radius:5px;font-size:.8rem}
+.li{color:var(--accent2);font-weight:700;text-align:center}
+.lt{color:var(--muted);font-size:.7rem;text-align:center;border-top:1px solid var(--border);padding-top:5px;margin-top:2px}
+.la{color:var(--text)}.ld{color:var(--danger);font-weight:600}.lc{color:var(--accent)}
+.le{color:var(--rare);font-style:italic}.lm{color:var(--danger);font-weight:700;text-align:center}
+.lf{color:var(--accent2);font-weight:700;text-align:center}.lb{color:#f97316;font-weight:700}
+.prog{font-size:.82rem;color:var(--muted);text-align:center}
+
+/* Recompensa */
+.rc-grid{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.rc{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:10px;
+  cursor:pointer;border:2px solid var(--border);background:rgba(255,255,255,.03);
+  transition:all .15s;text-align:left}
+.rc:hover{border-color:var(--accent);background:rgba(34,197,94,.07)}
+.rc.reliquia{border-color:rgba(245,158,11,.35)}
+.rc.reliquia:hover{border-color:var(--legendary);background:rgba(245,158,11,.07)}
+.rc.peca_swap{border-color:rgba(168,85,247,.35)}
+.rc.peca_swap:hover{border-color:var(--rare);background:rgba(168,85,247,.07)}
+.rc-e{font-size:1.7rem;flex-shrink:0}
+.rc-l{font-weight:700;font-size:.9rem}
+.rc-d{font-size:.76rem;color:var(--muted);margin-top:1px}
+
+/* Banners */
+.ban-ok{font-size:1.3rem;color:var(--accent);font-weight:700;margin-bottom:4px}
+.ban-bad{font-size:2rem;margin-bottom:6px}
+.ban-win{font-size:2rem;font-weight:900;color:var(--legendary);margin-bottom:6px}
+.rel-lista{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;justify-content:center}
+.rel-pip{font-size:.8rem;padding:2px 7px;background:rgba(245,158,11,.1);
+  border-radius:5px;border:1px solid rgba(245,158,11,.2)}
+
+/* Revelação multi */
+#grid-monstros{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:6px 0}
+.mr-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;
+  padding:16px 14px;text-align:center;width:170px}
+.mr-e{font-size:2rem;margin-bottom:6px}
+.mr-n{font-weight:700;color:var(--accent2);margin-bottom:3px;font-size:.88rem}
+.mr-j{font-size:.75rem;color:var(--muted);margin-bottom:10px}
+.badge-bot{font-size:.65rem;padding:1px 6px;border-radius:99px;
+  background:rgba(100,116,139,.2);color:var(--muted);vertical-align:middle}
+
+/* Ranking */
+#ranking{display:flex;flex-direction:column;gap:9px;margin:16px 0}
+.rank-i{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:11px;text-align:left}
+.rank-i:first-child{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+.rank-pos{font-size:1.4rem;width:32px;text-align:center}
+.rank-inf{flex:1}
+.rank-n{font-weight:700;color:var(--accent2)}
+.rank-j{font-size:.78rem;color:var(--muted)}
+.rank-w{font-size:1.1rem;font-weight:800;color:var(--accent);padding:5px 12px;
+  background:rgba(34,197,94,.1);border-radius:7px}
+
+@keyframes si{from{transform:translateX(-5px);opacity:0}to{transform:translateX(0);opacity:1}}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+@media(max-width:680px){.cl-body{flex-direction:column}.p-prev{width:100%;border-top:1px solid var(--border)}.p-pecas{max-height:50vh}}
+</style>
 </head>
 <body>
 
-  <!-- TELA: Entrada -->
-  <div id="tela-entrada" class="tela ativa">
-    <div class="card">
-      <div class="logo">🐉</div>
-      <h1>Monster Lab</h1>
-      <p class="subtitulo">Crie seu monstro. Domine a arena.</p>
-      <input id="input-nome" type="text" placeholder="Seu nome" maxlength="20" />
-      <div class="modo-btns">
-        <button id="btn-roguelike" class="btn-modo btn-destaque">⚔️ Roguelike</button>
-        <button id="btn-solo"      class="btn-modo">🤖 Partida Rápida</button>
-        <button id="btn-multi"     class="btn-modo btn-secundario">👥 Multijogador</button>
+<!-- ENTRADA -->
+<div id="t-entrada" class="tela ativa">
+  <div class="card">
+    <div style="font-size:3.2rem;margin-bottom:6px">🐉</div>
+    <h1>Monster Lab</h1>
+    <p class="sub">Crie seu monstro. Domine a arena.</p>
+    <div id="status-conexao" class="status-conexao offline">⏳ Verificando servidor...</div>
+    <input id="inp-nome" type="text" placeholder="Seu nome" maxlength="20"/>
+    <div class="modo-btns">
+      <button id="btn-rl" class="btn-roxo">⚔️ Roguelike</button>
+      <button id="btn-solo" class="btn-online" style="display:none">🤖 Partida Rápida</button>
+      <button id="btn-multi" class="btn-online btn-sec" style="display:none">👥 Multijogador</button>
+    </div>
+    <p id="msg-erro" style="color:var(--danger);font-size:.82rem;margin-top:8px;display:none"></p>
+  </div>
+</div>
+
+<!-- DIFICULDADE -->
+<div id="t-dif" class="tela">
+  <div class="card">
+    <h2>🎯 Dificuldade</h2>
+    <div class="dif-opcoes">
+      <button class="btn-dif" data-dif="facil">   <span class="dif-e">😌</span><div><span class="dif-n">Fácil</span>   <span class="dif-d">1 bot simples</span></div></button>
+      <button class="btn-dif" data-dif="medio">   <span class="dif-e">😤</span><div><span class="dif-n">Médio</span>   <span class="dif-d">2 bots equilibrados</span></div></button>
+      <button class="btn-dif" data-dif="dificil"> <span class="dif-e">😈</span><div><span class="dif-n">Difícil</span> <span class="dif-d">3 bots com combos</span></div></button>
+      <button class="btn-dif" data-dif="aleatorio"><span class="dif-e">🎲</span><div><span class="dif-n">Aleatório</span><span class="dif-d">Surpresa!</span></div></button>
+    </div>
+    <button id="btn-vlt-ent" class="btn-sec">← Voltar</button>
+  </div>
+</div>
+
+<!-- MULTI SALA -->
+<div id="t-multi" class="tela">
+  <div class="card">
+    <h2>👥 Multijogador</h2>
+    <input id="inp-sala" type="text" placeholder="Código da sala (ex: ARENA)" maxlength="12"/>
+    <button id="btn-entrar-sala">Entrar na Sala</button>
+    <button id="btn-vlt-multi" class="btn-sec">← Voltar</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div id="t-lobby" class="tela">
+  <div class="card">
+    <h2>Sala <span id="nome-sala" style="color:var(--accent)"></span></h2>
+    <p class="info" id="info-lobby">Aguardando jogadores...</p>
+    <ul id="lista-lobby"></ul>
+    <button id="btn-pronto">⚗️ Estou Pronto!</button>
+  </div>
+</div>
+
+<!-- CRIAÇÃO (online) -->
+<div id="t-criacao" class="tela">
+  <div class="cl">
+    <div class="cl-head">
+      <h2>🧪 Monte seu Monstro</h2>
+      <div id="timer-box" class="timer-box">⏱ <span id="timer-num">60</span>s</div>
+    </div>
+    <div class="cl-body">
+      <div class="p-pecas">
+        <div class="nome-row"><input id="inp-mn" type="text" placeholder="Nome do monstro" maxlength="25"/></div>
+        <div id="slots-online"></div>
       </div>
-      <p id="msg-erro" class="erro hidden"></p>
-    </div>
-  </div>
-
-  <!-- TELA: Dificuldade (solo rápido) -->
-  <div id="tela-dificuldade" class="tela">
-    <div class="card">
-      <h2>🎯 Dificuldade</h2>
-      <div class="dificuldade-opcoes">
-        <button class="btn-dif" data-dif="facil">
-          <span class="dif-emoji">😌</span><div><span class="dif-nome">Fácil</span><span class="dif-desc">1 bot simples</span></div>
-        </button>
-        <button class="btn-dif" data-dif="medio">
-          <span class="dif-emoji">😤</span><div><span class="dif-nome">Médio</span><span class="dif-desc">2 bots equilibrados</span></div>
-        </button>
-        <button class="btn-dif" data-dif="dificil">
-          <span class="dif-emoji">😈</span><div><span class="dif-nome">Difícil</span><span class="dif-desc">3 bots com combos</span></div>
-        </button>
-        <button class="btn-dif" data-dif="aleatorio">
-          <span class="dif-emoji">🎲</span><div><span class="dif-nome">Aleatório</span><span class="dif-desc">Surpresa!</span></div>
-        </button>
-      </div>
-      <button id="btn-voltar-entrada" class="btn-secundario" style="margin-top:14px">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- TELA: Multijogador entrada -->
-  <div id="tela-multi" class="tela">
-    <div class="card">
-      <h2>👥 Multijogador</h2>
-      <input id="input-sala" type="text" placeholder="Código da sala (ex: ARENA)" maxlength="12" />
-      <button id="btn-entrar-sala">Entrar na Sala</button>
-      <button id="btn-voltar-modo" class="btn-secundario">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- TELA: Lobby -->
-  <div id="tela-lobby" class="tela">
-    <div class="card">
-      <h2>Sala <span id="nome-sala" class="destaque"></span></h2>
-      <p class="info" id="info-lobby">Aguardando jogadores...</p>
-      <ul id="lista-lobby"></ul>
-      <button id="btn-pronto">⚗️ Estou Pronto!</button>
-    </div>
-  </div>
-
-  <!-- TELA: Criação (solo/multi) -->
-  <div id="tela-criacao" class="tela">
-    <div class="criacao-layout">
-      <div class="criacao-header">
-        <h2>🧪 Monte seu Monstro</h2>
-        <div id="timer-criacao-box" class="timer-criacao">⏱ <span id="timer-num">60</span>s</div>
-      </div>
-      <div class="criacao-corpo">
-        <div class="painel-pecas">
-          <div class="nome-monster-row">
-            <input id="input-nome-monster" type="text" placeholder="Nome do seu monstro" maxlength="25" />
+      <div class="p-prev">
+        <div class="mcard">
+          <div class="mcard-e" id="op-emoji">❓</div>
+          <div class="mcard-n"  id="op-nome">?????</div>
+          <div class="mcard-s">
+            <div class="mst"><span class="msl">❤️ Vida</span>      <span id="op-hp">—</span></div>
+            <div class="mst"><span class="msl">⚔️ Ataque</span>    <span id="op-atk">—</span></div>
+            <div class="mst"><span class="msl">🛡️ Defesa</span>    <span id="op-def">—</span></div>
+            <div class="mst"><span class="msl">⚡ Velocidade</span><span id="op-spd">—</span></div>
           </div>
-          <div id="slots-container"></div>
+          <div id="op-combos"></div>
         </div>
-        <div class="painel-preview">
-          <div class="monster-card">
-            <div class="monster-emoji-area" id="preview-emojis">❓❓❓</div>
-            <div class="monster-nome"       id="preview-nome">?????</div>
-            <div class="monster-stats">
-              <div class="stat"><span class="stat-label">❤️ Vida</span>      <span id="stat-hp">—</span></div>
-              <div class="stat"><span class="stat-label">⚔️ Ataque</span>    <span id="stat-atk">—</span></div>
-              <div class="stat"><span class="stat-label">🛡️ Defesa</span>    <span id="stat-def">—</span></div>
-              <div class="stat"><span class="stat-label">⚡ Velocidade</span><span id="stat-spd">—</span></div>
-            </div>
-            <div id="preview-combos" class="combo-list"></div>
+        <button id="btn-confirmar" disabled>✅ Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAFT ROGUELIKE -->
+<div id="t-draft" class="tela">
+  <div class="cl">
+    <div class="cl-head">
+      <h2>⚔️ Escolha suas Peças</h2>
+      <div class="rl-badge" id="badge-rod">Rodada 1 de 9</div>
+    </div>
+    <div class="cl-body">
+      <div class="p-pecas">
+        <div class="nome-row"><input id="rl-inp-mn" type="text" placeholder="Nome do monstro" maxlength="25"/></div>
+        <div id="rl-slots"></div>
+      </div>
+      <div class="p-prev">
+        <div class="mcard">
+          <div class="mcard-e" id="rl-emoji">❓</div>
+          <div class="mcard-n"  id="rl-nome">?????</div>
+          <div class="mcard-s">
+            <div class="mst"><span class="msl">❤️ Vida</span>      <span id="rl-hp">—</span></div>
+            <div class="mst"><span class="msl">⚔️ Ataque</span>    <span id="rl-atk">—</span></div>
+            <div class="mst"><span class="msl">🛡️ Defesa</span>    <span id="rl-def">—</span></div>
+            <div class="mst"><span class="msl">⚡ Velocidade</span><span id="rl-spd">—</span></div>
           </div>
-          <button id="btn-confirmar" disabled>✅ Confirmar</button>
         </div>
+        <button id="rl-btn-ok" disabled>⚔️ Batalhar!</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- TELA: Roguelike — Draft inicial -->
-  <div id="tela-rl-draft" class="tela">
-    <div class="criacao-layout">
-      <div class="criacao-header">
-        <h2>⚔️ Escolha suas Peças Iniciais</h2>
-        <div class="rl-badge">Rodada 1 de 9</div>
-      </div>
-      <div class="criacao-corpo">
-        <div class="painel-pecas">
-          <div class="nome-monster-row">
-            <input id="rl-input-nome" type="text" placeholder="Nome do seu monstro" maxlength="25" />
-          </div>
-          <div id="rl-slots-container"></div>
-        </div>
-        <div class="painel-preview">
-          <div class="monster-card">
-            <div class="monster-emoji-area" id="rl-preview-emojis">❓❓❓</div>
-            <div class="monster-nome"       id="rl-preview-nome">?????</div>
-            <div class="monster-stats">
-              <div class="stat"><span class="stat-label">❤️ Vida</span>      <span id="rl-stat-hp">—</span></div>
-              <div class="stat"><span class="stat-label">⚔️ Ataque</span>    <span id="rl-stat-atk">—</span></div>
-              <div class="stat"><span class="stat-label">🛡️ Defesa</span>    <span id="rl-stat-def">—</span></div>
-              <div class="stat"><span class="stat-label">⚡ Velocidade</span><span id="rl-stat-spd">—</span></div>
-            </div>
-          </div>
-          <button id="rl-btn-confirmar" disabled>⚔️ Iniciar Run!</button>
-        </div>
-      </div>
+<!-- PRÉ-COMBATE RL -->
+<div id="t-pre" class="tela">
+  <div class="card wide">
+    <div class="zona-h" id="pre-zona"></div>
+    <div class="rodada-i" id="pre-rod"></div>
+    <div class="vs-pre">
+      <div class="mvc" id="pre-meu"></div>
+      <div class="vs-sep">VS</div>
+      <div class="mvc enemy" id="pre-ini"></div>
     </div>
+    <p class="info" style="margin-top:12px">Batalha começando...</p>
   </div>
+</div>
 
-  <!-- TELA: Roguelike — Pré-combate -->
-  <div id="tela-rl-pre-combate" class="tela">
-    <div class="card wide">
-      <div class="rl-zona-header" id="rl-zona-header"></div>
-      <div class="rl-rodada-info" id="rl-rodada-info"></div>
-      <div class="vs-pre">
-        <div class="monster-vs-card" id="rl-pre-meu"></div>
-        <div class="vs-sep">VS</div>
-        <div class="monster-vs-card enemy" id="rl-pre-inimigo"></div>
-      </div>
-      <p class="info" style="margin-top:16px">Batalha começando em instantes...</p>
+<!-- REVELAÇÃO (multi/solo) -->
+<div id="t-rev" class="tela">
+  <div class="card wide">
+    <h2>⚔️ Os Monstros Entraram na Arena!</h2>
+    <div id="grid-monstros"></div>
+  </div>
+</div>
+
+<!-- COMBATE -->
+<div id="t-combate" class="tela">
+  <div class="card wide">
+    <h2>🏟️ Arena</h2>
+    <div class="vs-h">
+      <span class="fn" id="fn-a"></span>
+      <span class="vs-l">VS</span>
+      <span class="fn" id="fn-b"></span>
     </div>
-  </div>
-
-  <!-- TELA: Combate (reusada) -->
-  <div id="tela-combate" class="tela">
-    <div class="card wide">
-      <h2>🏟️ Arena</h2>
-      <div class="vs-header">
-        <span id="nome-fighter-a" class="fighter-nome"></span>
-        <span class="vs-label">VS</span>
-        <span id="nome-fighter-b" class="fighter-nome"></span>
-      </div>
-      <div class="hp-bars">
-        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-bar-a"></div></div>
-        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-bar-b"></div></div>
-      </div>
-      <div id="log-combate"></div>
-      <div class="progresso-torneio">
-        Batalha <span id="batalha-atual">1</span> de <span id="batalha-total">1</span>
-      </div>
+    <div class="hp-bars">
+      <div class="hp-wrap"><div class="hp-fill" id="hpb-a"></div></div>
+      <div class="hp-wrap"><div class="hp-fill" id="hpb-b"></div></div>
     </div>
+    <div id="log"></div>
+    <div class="prog">Batalha <span id="bat-at">—</span> de <span id="bat-tot">—</span></div>
   </div>
+</div>
 
-  <!-- TELA: Roguelike — Recompensa -->
-  <div id="tela-rl-recompensa" class="tela">
-    <div class="card">
-      <div class="rl-vitoria-banner">✅ Vitória!</div>
-      <h2>🎁 Escolha sua Recompensa</h2>
-      <p class="info" id="rl-recompensa-rodada"></p>
-      <div id="rl-recompensa-opcoes" class="recompensa-grid"></div>
-    </div>
+<!-- RECOMPENSA RL -->
+<div id="t-recomp" class="tela">
+  <div class="card">
+    <div class="ban-ok">✅ Vitória!</div>
+    <h2>🎁 Escolha sua Recompensa</h2>
+    <p class="info" id="rc-info"></p>
+    <div id="rc-opcoes" class="rc-grid"></div>
   </div>
+</div>
 
-  <!-- TELA: Roguelike — Game Over -->
-  <div id="tela-rl-gameover" class="tela">
-    <div class="card">
-      <div class="rl-gameover-banner">💀 Derrotado!</div>
-      <h2>Fim de Run</h2>
-      <p id="rl-gameover-rodada" class="info"></p>
-      <div id="rl-gameover-monster" class="monster-card" style="margin:20px auto;max-width:260px;text-align:center"></div>
-      <button id="rl-btn-nova-run">🔄 Nova Run</button>
-    </div>
+<!-- GAME OVER RL -->
+<div id="t-over" class="tela">
+  <div class="card">
+    <div class="ban-bad">💀 Derrotado!</div>
+    <h2>Fim de Run</h2>
+    <p class="info" id="over-info"></p>
+    <div id="over-monster" class="mcard" style="margin:16px auto;max-width:250px"></div>
+    <button id="btn-over">🔄 Nova Run</button>
   </div>
+</div>
 
-  <!-- TELA: Roguelike — Vitória final -->
-  <div id="tela-rl-vitoria" class="tela">
-    <div class="card">
-      <div class="rl-vitoria-final">🏆 LENDÁRIO!</div>
-      <h2>Você sobreviveu às 9 rodadas!</h2>
-      <div id="rl-vitoria-monster" class="monster-card" style="margin:20px auto;max-width:260px;text-align:center"></div>
-      <button id="rl-btn-nova-run-v">🔄 Nova Run</button>
-    </div>
+<!-- VITÓRIA RL -->
+<div id="t-win" class="tela">
+  <div class="card">
+    <div class="ban-win">🏆 LENDÁRIO!</div>
+    <h2>Você sobreviveu às 9 rodadas!</h2>
+    <div id="win-monster" class="mcard" style="margin:16px auto;max-width:250px"></div>
+    <button id="btn-win">🔄 Nova Run</button>
   </div>
+</div>
 
-  <!-- TELA: Revelação -->
-  <div id="tela-revelacao" class="tela">
-    <div class="card wide">
-      <h2>⚔️ Os Monstros Entraram na Arena!</h2>
-      <div id="grid-monstros"></div>
-    </div>
+<!-- RESULTADO (multi/solo) -->
+<div id="t-result" class="tela">
+  <div class="card">
+    <h2>🏆 Resultado Final</h2>
+    <div id="ranking"></div>
+    <button id="btn-novo">Jogar Novamente</button>
   </div>
+</div>
 
-  <!-- TELA: Resultado (multi/solo rápido) -->
-  <div id="tela-resultado" class="tela">
-    <div class="card">
-      <h2>🏆 Resultado Final</h2>
-      <div id="ranking"></div>
-      <button id="btn-jogar-novamente">Jogar Novamente</button>
-    </div>
-  </div>
+<script>
+// ═══════════════════════════════════════════════
+//  DADOS
+// ═══════════════════════════════════════════════
+const BASE={hp:50,atk:0,def:0,spd:0};
+const PECAS={
+  cabeca_dragao:    {id:"cabeca_dragao",    slot:"cabeca",  nome:"Cabeça de Dragão",   emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:5, atk:15,def:0, spd:5 },descricao:"Sopro de fogo devastador."},
+  cabeca_lobo:      {id:"cabeca_lobo",      slot:"cabeca",  nome:"Cabeça de Lobo",     emoji:"🐺",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:0, spd:10},descricao:"Uivo paralisante."},
+  cabeca_cobra:     {id:"cabeca_cobra",     slot:"cabeca",  nome:"Cabeça de Cobra",    emoji:"🐍",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:0, spd:12},descricao:"Presas venenosas."},
+  cabeca_aguia:     {id:"cabeca_aguia",     slot:"cabeca",  nome:"Cabeça de Águia",    emoji:"🦅",raridade:"comum",   tipo:null,     stats:{hp:0, atk:5, def:5, spd:15},descricao:"Visão aguçada."},
+  cabeca_demonio:   {id:"cabeca_demonio",   slot:"cabeca",  nome:"Cabeça de Demônio",  emoji:"😈",raridade:"rara",    tipo:"sombra", stats:{hp:0, atk:20,def:0, spd:8 },descricao:"Terror absoluto."},
+  cabeca_fenix:     {id:"cabeca_fenix",     slot:"cabeca",  nome:"Cabeça de Fênix",    emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:15,atk:12,def:5, spd:8 },descricao:"Renascida das chamas."},
+  corpo_ogro:       {id:"corpo_ogro",       slot:"corpo",   nome:"Corpo de Ogro",      emoji:"👹",raridade:"comum",   tipo:null,     stats:{hp:20,atk:0, def:5, spd:0 },descricao:"Massa muscular brutal."},
+  corpo_cavaleiro:  {id:"corpo_cavaleiro",  slot:"corpo",   nome:"Corpo de Cavaleiro", emoji:"⚔️",raridade:"comum",   tipo:"luz",    stats:{hp:10,atk:5, def:10,spd:0 },descricao:"Armadura impenetrável."},
+  corpo_aranha:     {id:"corpo_aranha",     slot:"corpo",   nome:"Corpo de Aranha",    emoji:"🕷️",raridade:"comum",   tipo:"veneno", stats:{hp:5, atk:5, def:3, spd:8 },descricao:"Ágil e mortal."},
+  corpo_troll:      {id:"corpo_troll",      slot:"corpo",   nome:"Corpo de Troll",     emoji:"🧌",raridade:"rara",    tipo:null,     stats:{hp:35,atk:0, def:8, spd:-5},descricao:"Regeneração sobrenatural.",efeito:"regeneracao"},
+  corpo_demonio:    {id:"corpo_demonio",    slot:"corpo",   nome:"Corpo de Demônio",   emoji:"🔱",raridade:"rara",    tipo:"sombra", stats:{hp:15,atk:10,def:5, spd:0 },descricao:"Poder das trevas."},
+  corpo_leviata:    {id:"corpo_leviata",    slot:"corpo",   nome:"Corpo de Leviatã",   emoji:"🌊",raridade:"lendaria",tipo:null,     stats:{hp:40,atk:0, def:10,spd:0 },descricao:"Resistência colossal."},
+  membros_garras:   {id:"membros_garras",   slot:"membros", nome:"Garras",             emoji:"🦴",raridade:"comum",   tipo:null,     stats:{hp:0, atk:12,def:0, spd:0 },descricao:"Laceram qualquer armadura."},
+  membros_tentaculos:{id:"membros_tentaculos",slot:"membros",nome:"Tentáculos",        emoji:"🐙",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:3, spd:0 },descricao:"Imobilizam e envenenam."},
+  membros_bracos:   {id:"membros_bracos",   slot:"membros", nome:"Braços Gigantes",    emoji:"💪",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:5, spd:0 },descricao:"Smash irresistível."},
+  membros_laminas:  {id:"membros_laminas",  slot:"membros", nome:"Lâminas Afiadas",    emoji:"🗡️",raridade:"rara",    tipo:null,     stats:{hp:-5,atk:18,def:0, spd:5 },descricao:"Cortam o vento."},
+  membros_garras_dragao:{id:"membros_garras_dragao",slot:"membros",nome:"Garras de Dragão",emoji:"🐲",raridade:"rara",tipo:"fogo",  stats:{hp:0, atk:20,def:0, spd:0 },descricao:"Incineram o que tocam."},
+  asas_nenhuma:     {id:"asas_nenhuma",     slot:"asas",    nome:"Sem Asas",           emoji:"—", raridade:"comum",   tipo:null,     stats:{hp:0, atk:0, def:0, spd:0 },descricao:"Fica no chão."},
+  asas_morcego:     {id:"asas_morcego",     slot:"asas",    nome:"Asas de Morcego",    emoji:"🦇",raridade:"comum",   tipo:"sombra", stats:{hp:0, atk:0, def:0, spd:10},descricao:"Rápido como a noite."},
+  asas_anjo:        {id:"asas_anjo",        slot:"asas",    nome:"Asas de Anjo",       emoji:"👼",raridade:"comum",   tipo:"luz",    stats:{hp:15,atk:0, def:5, spd:0 },descricao:"Proteção divina."},
+  asas_dragao:      {id:"asas_dragao",      slot:"asas",    nome:"Asas de Dragão",     emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:0, atk:5, def:0, spd:8 },descricao:"Voam e cospem fogo."},
+  asas_fenix:       {id:"asas_fenix",       slot:"asas",    nome:"Asas de Fênix",      emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:20,atk:0, def:0, spd:5 },descricao:"Ressuscita uma vez.",efeito:"ressurreicao"},
+};
+const SLOTS=["cabeca","corpo","membros","asas"];
+const SLOT_L={cabeca:"🐲 Cabeça",corpo:"💀 Corpo",membros:"🦴 Membros",asas:"🦋 Asas"};
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/client.js"></script>
+const COMBOS=[
+  {id:"dragao_puro",  nome:"Dragão Puro",      emoji:"🔥🐉",requer:["cabeca_dragao","membros_garras_dragao","asas_dragao"],    min:3,bonus:{hp:50,atk:20,def:0,spd:0},efeitos:["fogo_persistente"]},
+  {id:"rei_sombras",  nome:"Rei das Sombras",  emoji:"🌑👑", requer:["cabeca_cobra","corpo_aranha","asas_morcego"],             min:3,bonus:{hp:10,atk:10,def:5,spd:10},efeitos:["veneno_permanente"]},
+  {id:"cavaleiro",    nome:"Cavaleiro Sagrado", emoji:"✨⚔️", requer:["corpo_cavaleiro","asas_anjo"],                           min:2,bonus:{hp:30,atk:0,def:15,spd:0},efeitos:[]},
+  {id:"berserker",    nome:"Berserker Sombrio", emoji:"😈💢", requer:["cabeca_demonio","corpo_demonio"],                        min:2,bonus:{hp:0,atk:15,def:0,spd:5},efeitos:["berserk"]},
+  {id:"tanque",       nome:"Tanque Ancestral",  emoji:"🧌🛡️", requer:["corpo_troll","membros_bracos"],                          min:2,bonus:{hp:20,atk:5,def:5,spd:0},efeitos:["regeneracao"]},
+  {id:"fenix_f",      nome:"Força da Fênix",    emoji:"🔥🌅", requer:["cabeca_fenix","asas_fenix"],                             min:2,bonus:{hp:20,atk:10,def:0,spd:0},efeitos:["ressurreicao","fogo_persistente"]},
+  {id:"assassino",    nome:"Assassino Veloz",   emoji:"⚡🗡️", requer:["cabeca_cobra","membros_laminas","asas_morcego"],         min:3,bonus:{hp:0,atk:10,def:0,spd:20},efeitos:["veneno_permanente"]},
+];
+
+const RELIQUIAS=[
+  {id:"coracao_fenix",   nome:"Coração de Fênix",   emoji:"🔥",desc:"Ressuscita uma vez.",       ef:"ressurreicao"},
+  {id:"sangue_dragao",   nome:"Sangue de Dragão",   emoji:"🐉",desc:"Ataques causam fogo.",      ef:"fogo_persistente"},
+  {id:"veneno_ancestral",nome:"Veneno Ancestral",   emoji:"🐍",desc:"Ataques sempre envenenam.", ef:"veneno_permanente"},
+  {id:"furia_berserker", nome:"Fúria Berserker",    emoji:"💢",desc:"<50% HP: +50% ataque.",     ef:"berserk"},
+  {id:"cura_troll",      nome:"Cura do Troll",      emoji:"🧌",desc:"Regenera 5 HP/turno.",      ef:"regeneracao"},
+];
+
+const ZONAS=[
+  {nome:"Floresta Sombria",emoji:"🌲",rar:["comum"]},
+  {nome:"Pântano Venenoso",emoji:"🌿",rar:["comum","rara"]},
+  {nome:"Vulcão Ancestral",emoji:"🌋",rar:["comum","rara","lendaria"]},
+];
+const BOSSES=[
+  {nome:"Rei Lobo",      pecas:["cabeca_lobo",  "corpo_troll",  "membros_garras_dragao","asas_nenhuma"]},
+  {nome:"Hidra Venenosa",pecas:["cabeca_cobra",  "corpo_aranha", "membros_tentaculos",   "asas_morcego"]},
+  {nome:"Dragão Ancião", pecas:["cabeca_dragao", "corpo_leviata","membros_garras_dragao","asas_dragao"]},
+];
+
+// ═══════════════════════════════════════════════
+//  FUNÇÕES DE JOGO
+// ═══════════════════════════════════════════════
+function calcStats(ids){
+  const s={...BASE};const ef=[];
+  ids.forEach(id=>{const p=PECAS[id];if(!p)return;
+    s.hp+=p.stats.hp;s.atk+=p.stats.atk;s.def+=p.stats.def;s.spd+=p.stats.spd;
+    if(p.efeito&&!ef.includes(p.efeito))ef.push(p.efeito);
+  });
+  s.hp=Math.max(10,s.hp);s.atk=Math.max(1,s.atk);s.def=Math.max(0,s.def);s.spd=Math.max(1,s.spd);
+  return{stats:s,efeitos:ef};
+}
+function verifCombos(ids){
+  const set=new Set(ids);
+  return COMBOS.filter(c=>c.requer.filter(id=>set.has(id)).length>=c.min);
+}
+function buildMonster(nome,sel,jogId,jogNome,reliquias=[]){
+  const ids=Object.values(sel).filter(Boolean);
+  const{stats,efeitos}=calcStats(ids);
+  const combos=verifCombos(ids);
+  combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;
+    c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
+  reliquias.forEach(rid=>{const r=RELIQUIAS.find(x=>x.id===rid);if(r&&!efeitos.includes(r.ef))efeitos.push(r.ef)});
+  return{id:jogId,nome:nome||"Monstro",jogadorNome:jogNome,pecas:{...sel},stats,efeitos,combos,reliquias:[...reliquias]};
+}
+
+function batalhar(mA,mB){
+  const a=mkC(mA),b=mkC(mB);const log=[];
+  log.push({t:"inicio",txt:`⚔️ ${a.nome} VS ${b.nome}`});
+  log.push({t:"stats",a:{nome:a.nome,hp:a.hp},b:{nome:b.nome,hp:b.hp}});
+  let[p,s]=a.spd>=b.spd?[a,b]:[b,a];
+  for(let T=1;T<=40;T++){
+    log.push({t:"turno",T});
+    for(const[at,df]of[[p,s],[s,p]]){
+      if(at.hp<=0||df.hp<=0)break;
+      if(hasEf(at,"regeneracao")){const c=5;at.hp=Math.min(at.maxHp,at.hp+c);log.push({t:"cura",nome:at.nome,v:c,hp:at.hp})}
+      let d=Math.max(1,at.atk-Math.floor(df.def*.5))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
+      if(hasEf(at,"berserk")&&at.hp<at.maxHp*.5){d=Math.floor(d*1.5);log.push({t:"berserk",nome:at.nome})}
+      df.hp-=d;log.push({t:"atk",at:at.nome,df:df.nome,d,hpDf:Math.max(0,df.hp)});
+      if(hasEf(at,"veneno_permanente")){if(Math.random()<.5){adDot(df,{t:"veneno",turns:3,d:4});log.push({t:"env",nome:df.nome})}}
+      if(hasEf(at,"fogo_persistente")){if(Math.random()<.4){adDot(df,{t:"fogo",turns:2,d:6});log.push({t:"queima",nome:df.nome})}}
+      df.dots.forEach(dot=>{if(dot.turns<=0)return;df.hp-=dot.d;dot.turns--;log.push({t:"dot",ef:dot.t,nome:df.nome,d:dot.d,hp:Math.max(0,df.hp)})});
+      df.dots=df.dots.filter(x=>x.turns>0);
+      if(df.hp<=0){
+        if(hasEf(df,"ressurreicao")&&!df.ressuscitou){df.ressuscitou=true;df.hp=Math.floor(df.maxHp*.3);log.push({t:"ress",nome:df.nome,hp:df.hp})}
+        else{log.push({t:"morte",nome:df.nome});const v=df===a?"b":"a";log.push({t:"fim",v:v==="a"?a.nome:b.nome});return{venc:v==="a"?mA.id:mB.id,log}}
+      }
+    }
+  }
+  const v=a.hp>=b.hp?a:b;log.push({t:"empate",txt:`Tempo! ${v.nome} vence por HP.`});log.push({t:"fim",v:v.nome});
+  return{venc:v===a?mA.id:mB.id,log};
+}
+function mkC(m){return{nome:m.nome,id:m.id,hp:m.stats.hp,maxHp:m.stats.hp,atk:m.stats.atk,def:m.stats.def,spd:m.stats.spd,efeitos:[...(m.efeitos||[])],dots:[],ressuscitou:false}}
+function hasEf(c,ef){return c.efeitos.includes(ef)}
+function adDot(c,d){const e=c.dots.find(x=>x.t===d.t);if(e)e.turns=Math.max(e.turns,d.turns);else c.dots.push({...d})}
+
+// ═══════════════════════════════════════════════
+//  ROGUELIKE (client-side, sem servidor)
+// ═══════════════════════════════════════════════
+let RUN=null;
+function novaRun(nome){RUN={nome,rodada:0,monster:null,reliquias:[]}}
+
+function rlGerarInimigo(rodada){
+  const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
+  const mult=1+(rodada-1)*0.13*(isBoss?1.3:1);
+  let nome,ids;
+  if(isBoss){const b=BOSSES[Math.floor(rodada/3)-1];nome=b.nome+"  👑";ids=b.pecas}
+  else{
+    const ns=["Chimera","Basilisco","Wyvern","Golem","Manticora","Gargoyle","Wendigo"];
+    nome=ns[Math.floor(Math.random()*ns.length)];
+    ids=SLOTS.map(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&ZONAS[zi].rar.includes(p.raridade));return pool[Math.floor(Math.random()*pool.length)].id});
+  }
+  const{stats,efeitos}=calcStats(ids);const combos=verifCombos(ids);
+  combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
+  const bm=isBoss?1.3:1;
+  stats.hp=Math.max(10,Math.floor(stats.hp*mult*bm));stats.atk=Math.max(1,Math.floor(stats.atk*mult*bm));
+  stats.def=Math.max(0,Math.floor(stats.def*mult*bm));stats.spd=Math.max(1,Math.floor(stats.spd*mult));
+  const pecas={};ids.forEach(id=>{const p=PECAS[id];if(p)pecas[p.slot]=id});
+  return{id:"inimigo",nome,pecas,stats,efeitos,combos,isBoss};
+}
+function rlGerarRecomp(rodada,monster){
+  const r=rodada,pool=[];
+  pool.push({tipo:"stat_boost",stat:"hp", valor:15+r*3,emoji:"❤️",label:`+${15+r*3} Vida Máxima`});
+  pool.push({tipo:"stat_boost",stat:"atk",valor:8+r*2, emoji:"⚔️",label:`+${8+r*2} Ataque`});
+  pool.push({tipo:"stat_boost",stat:"def",valor:5+r,   emoji:"🛡️",label:`+${5+r} Defesa`});
+  pool.push({tipo:"stat_boost",stat:"spd",valor:4+r,   emoji:"⚡",label:`+${4+r} Velocidade`});
+  if(r>=2)pool.push({tipo:"full_heal",emoji:"💊",label:"+30 Vida"});
+  const sl=SLOTS[Math.floor(Math.random()*SLOTS.length)];
+  const rp=Object.values(PECAS).filter(p=>p.slot===sl&&(p.raridade==="rara"||p.raridade==="lendaria"));
+  if(rp.length){const np=rp[Math.floor(Math.random()*rp.length)];pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,peca:np})}
+  if(r>=2){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:rl.nome,desc:rl.desc,reliquia:rl})}}
+  return pool.sort(()=>Math.random()-.5).slice(0,3);
+}
+function rlAplicarRecomp(monster,r){
+  const s=monster.stats;
+  if(r.tipo==="stat_boost")s[r.stat]+=r.valor;
+  else if(r.tipo==="full_heal")s.hp+=30;
+  else if(r.tipo==="peca_swap"){
+    const v=PECAS[monster.pecas[r.slot]],n=r.peca;
+    if(v){s.hp-=v.stats.hp;s.atk-=v.stats.atk;s.def-=v.stats.def;s.spd-=v.stats.spd}
+    if(n){s.hp+=n.stats.hp;s.atk+=n.stats.atk;s.def+=n.stats.def;s.spd+=n.stats.spd}
+    s.hp=Math.max(10,s.hp);s.atk=Math.max(1,s.atk);monster.pecas[r.slot]=r.peca.id;
+  }else if(r.tipo==="reliquia"){
+    monster.reliquias.push(r.reliquia.id);
+    if(r.reliquia.ef&&!monster.efeitos.includes(r.reliquia.ef))monster.efeitos.push(r.reliquia.ef);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════
+const el=id=>document.getElementById(id);
+function mostrar(id){document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));el(id).classList.add("ativa")}
+function mostrarErro(msg){el("msg-erro").textContent=msg;el("msg-erro").style.display="block"}
+
+function renderSlots(containerId,selObj,cat,onChange){
+  const cont=el(containerId);cont.innerHTML="";
+  for(const[slot,pecas]of Object.entries(cat)){
+    const g=document.createElement("div");g.className="slot-g";
+    const t=document.createElement("div");t.className="slot-t";t.textContent=SLOT_L[slot]||slot;g.appendChild(t);
+    const o=document.createElement("div");o.className="slot-o";
+    pecas.forEach(p=>{
+      const b=document.createElement("button");b.className=`pb ${p.raridade}`;b.dataset.slot=slot;b.dataset.id=p.id;
+      const st=p.stats;
+      const tags=[st.hp!==0?`<span class="ps-t">❤️${st.hp>0?"+":""}${st.hp}</span>`:"",st.atk!==0?`<span class="ps-t">⚔️+${st.atk}</span>`:"",st.def!==0?`<span class="ps-t">🛡️+${st.def}</span>`:"",st.spd!==0?`<span class="ps-t">⚡${st.spd>0?"+":""}${st.spd}</span>`:""].filter(Boolean).join("");
+      b.innerHTML=`<span class="pe">${p.emoji}</span><span class="pn">${p.nome}</span><span class="br ${p.raridade}">${p.raridade}</span><div class="peca-stats">${tags||'<span class="ps-t" style="color:var(--muted)">—</span>'}</div>`;
+      b.title=p.descricao;
+      if(p.id==="asas_nenhuma")b.classList.add("sel");
+      b.addEventListener("click",()=>{cont.querySelectorAll(`.pb[data-slot="${slot}"]`).forEach(x=>x.classList.remove("sel"));b.classList.add("sel");selObj[slot]=p.id;onChange()});
+      o.appendChild(b);
+    });
+    g.appendChild(o);cont.appendChild(g);
+  }
+}
+
+function calcPreviewStats(selObj,cat){
+  const s={hp:50,atk:0,def:0,spd:0};
+  Object.values(selObj).filter(Boolean).forEach(id=>{
+    for(const sl of Object.keys(cat)){const p=cat[sl]?.find(x=>x.id===id);if(p){s.hp+=p.stats.hp;s.atk+=p.stats.atk;s.def+=p.stats.def;s.spd+=p.stats.spd;break}}
+  });return s;
+}
+
+function monsterEmojis(pecas,cat){
+  return SLOTS.map(sl=>{
+    const id=pecas[sl];if(!id||id==="asas_nenhuma")return"";
+    if(cat){for(const s of Object.keys(cat)){const p=cat[s]?.find(x=>x.id===id);if(p)return p.emoji}}
+    const p=PECAS[id];return p?p.emoji:"";
+  }).filter(Boolean).join(" ");
+}
+
+function renderMVC(m,cat){
+  const emojis=monsterEmojis(m.pecas,cat)||"👾";
+  const rels=(m.reliquias||[]).length?`<div class="rel-lista" style="margin-top:6px">${m.reliquias.map(()=>`<span class="rel-pip">💎</span>`).join("")}</div>`:"";
+  return`<div class="mvc-e">${emojis}</div><div class="mvc-n">${m.nome}</div><div class="mvc-s"><span class="sp">❤️ ${m.stats.hp}</span><span class="sp">⚔️ ${m.stats.atk}</span><span class="sp">🛡️ ${m.stats.def}</span><span class="sp">⚡ ${m.stats.spd}</span></div>${rels}`;
+}
+
+// ═══════════════════════════════════════════════
+//  COMBATE UI (compartilhado RL + online)
+// ═══════════════════════════════════════════════
+let hpMaxA=1,hpMaxB=1;
+function initCombateUI(nomeA,nomeB,maxA,maxB,batAt,batTot){
+  el("fn-a").textContent=nomeA;el("fn-b").textContent=nomeB;
+  hpMaxA=maxA;hpMaxB=maxB;
+  el("hpb-a").style.width="100%";el("hpb-b").style.width="100%";
+  el("hpb-a").classList.remove("low");el("hpb-b").classList.remove("low");
+  el("log").innerHTML="";
+  el("bat-at").textContent=batAt||"—";el("bat-tot").textContent=batTot||"—";
+  mostrar("t-combate");
+}
+function animarLog(log,nomeA,nomeB,onDone){
+  let delay=0;
+  log.forEach(e=>{delay+=velLog(e);setTimeout(()=>renderLogLine(e,nomeA,nomeB),delay)});
+  if(onDone)setTimeout(onDone,delay+600);
+}
+function velLog(e){if(e.t==="turno")return 160;if(e.t==="inicio"||e.t==="fim")return 300;return 85}
+function renderLogLine(e,nA,nB){
+  const d=el("log");const l=document.createElement("div");l.className="ll";l.style.animation="si .2s ease";
+  const nomeA=nA,nomeB=nB;
+  if(e.t==="inicio"){l.className+=" li";l.textContent=e.txt}
+  else if(e.t==="turno"){l.className+=" lt";l.textContent=`— Turno ${e.T} —`}
+  else if(e.t==="atk"){l.className+=" la";l.innerHTML=`<b>${e.at}</b> → <span class="ld">-${e.d} HP</span> ${e.df}: ${e.hpDf} HP`;atuHP(e.df,e.hpDf,nomeA,nomeB)}
+  else if(e.t==="cura"){l.className+=" lc";l.textContent=`🌿 ${e.nome} regenera +${e.v} HP`}
+  else if(e.t==="env"){l.className+=" le";l.textContent=`🐍 ${e.nome} envenenado!`}
+  else if(e.t==="queima"){l.className+=" le";l.textContent=`🔥 ${e.nome} em chamas!`}
+  else if(e.t==="dot"){l.className+=" ld";l.textContent=`${e.ef==="veneno"?"🐍":"🔥"} ${e.nome} -${e.d} (${e.hp} HP)`;atuHP(e.nome,e.hp,nomeA,nomeB)}
+  else if(e.t==="berserk"){l.className+=" lb";l.textContent=`💢 ${e.nome} BERSERK!`}
+  else if(e.t==="ress"){l.className+=" le";l.textContent=`🔥 ${e.nome} renasce! (${e.hp} HP)`}
+  else if(e.t==="morte"){l.className+=" lm";l.textContent=`💀 ${e.nome} derrotado!`}
+  else if(e.t==="fim"){l.className+=" lf";l.textContent=`🏆 ${e.v} venceu!`}
+  else if(e.t==="empate"){l.className+=" lf";l.textContent=e.txt}
+  else return;
+  d.appendChild(l);d.scrollTop=d.scrollHeight;
+}
+function atuHP(nome,hp,nA,nB){
+  let fill,max;
+  if(nome===nA){fill=el("hpb-a");max=hpMaxA}else if(nome===nB){fill=el("hpb-b");max=hpMaxB}else return;
+  const pct=Math.max(0,Math.min(100,(hp/max)*100));
+  fill.style.width=pct+"%";if(pct<30)fill.classList.add("low");else fill.classList.remove("low");
+}
+
+// ═══════════════════════════════════════════════
+//  FLUXO ROGUELIKE
+// ═══════════════════════════════════════════════
+let rlSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+let rlCat=null;
+let inimigoAtual=null;
+
+function rlIniciarDraft(){
+  rlSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+  const rod=RUN.rodada+1;
+  el("badge-rod").textContent=`Rodada ${rod} de 9`;
+  const zi=Math.min(Math.floor((rod-1)/3),2);const rar=ZONAS[zi].rar;
+  rlCat={};
+  SLOTS.forEach(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&rar.includes(p.raridade));rlCat[sl]=pool.sort(()=>Math.random()-.5).slice(0,3)});
+  renderSlots("rl-slots",rlSel,rlCat,rlAtuPreview);
+  rlAtuPreview();mostrar("t-draft");
+}
+function rlAtuPreview(){
+  const s=calcPreviewStats(rlSel,rlCat);
+  const emojis=SLOTS.map(sl=>{const p=rlCat[sl]?.find(x=>x.id===rlSel[sl]);return(p&&p.id!=="asas_nenhuma")?p.emoji:""}).filter(Boolean).join(" ");
+  el("rl-emoji").textContent=emojis||"❓";
+  el("rl-nome").textContent=el("rl-inp-mn").value.trim()||"Monstro Sem Nome";
+  el("rl-hp").textContent=Math.max(10,s.hp);el("rl-atk").textContent=Math.max(1,s.atk);
+  el("rl-def").textContent=Math.max(0,s.def);el("rl-spd").textContent=Math.max(1,s.spd);
+  el("rl-btn-ok").disabled=!(rlSel.cabeca&&rlSel.corpo&&rlSel.membros);
+}
+el("rl-inp-mn").addEventListener("input",rlAtuPreview);
+el("rl-btn-ok").addEventListener("click",()=>{
+  const nome=el("rl-inp-mn").value.trim()||`Monstro de ${RUN.nome}`;
+  const sel={...rlSel};sel.asas=sel.asas||"asas_nenhuma";
+  RUN.monster=buildMonster(nome,sel,"jogador",RUN.nome,RUN.reliquias||[]);
+  RUN.rodada++;rlPreCombate();
+});
+
+function rlPreCombate(){
+  inimigoAtual=rlGerarInimigo(RUN.rodada);
+  const isBoss=RUN.rodada%3===0;
+  const zi=Math.min(Math.floor((RUN.rodada-1)/3),2);const zona=ZONAS[zi];
+  el("pre-zona").textContent=`${zona.emoji} ${zona.nome}`;
+  el("pre-rod").innerHTML=`Rodada ${RUN.rodada} de 9`+(isBoss?` &nbsp;<span class="boss-av">👑 BOSS!</span>`:"");
+  el("pre-meu").innerHTML=renderMVC(RUN.monster,rlCat);
+  el("pre-ini").innerHTML=renderMVC(inimigoAtual,rlCat);
+  el("pre-ini").className="mvc enemy"+(isBoss?" boss":"");
+  mostrar("t-pre");
+  setTimeout(()=>{
+    const res=batalhar(RUN.monster,inimigoAtual);
+    initCombateUI(RUN.monster.nome,inimigoAtual.nome,RUN.monster.stats.hp,inimigoAtual.stats.hp);
+    animarLog(res.log,RUN.monster.nome,inimigoAtual.nome,()=>{
+      if(res.venc===RUN.monster.id)rlMostrarRecomp();else rlGameOver();
+    });
+  },2200);
+}
+
+function rlMostrarRecomp(){
+  if(RUN.rodada>=9){rlVitoria();return}
+  el("rc-info").textContent=`Rodada ${RUN.rodada} de 9 concluída`;
+  const recomp=rlGerarRecomp(RUN.rodada,RUN.monster);
+  const grid=el("rc-opcoes");grid.innerHTML="";
+  recomp.forEach(r=>{
+    const card=document.createElement("div");card.className=`rc ${r.tipo}`;
+    card.innerHTML=`<span class="rc-e">${r.emoji}</span><div><div class="rc-l">${r.label}</div>${r.desc?`<div class="rc-d">${r.desc}</div>`:""}</div>`;
+    card.addEventListener("click",()=>{
+      grid.querySelectorAll(".rc").forEach(c=>c.style.pointerEvents="none");
+      rlAplicarRecomp(RUN.monster,r);
+      setTimeout(()=>rlIniciarDraft(),350);
+    });
+    grid.appendChild(card);
+  });mostrar("t-recomp");
+}
+
+function rlGameOver(){
+  el("over-info").textContent=`Você chegou até a rodada ${RUN.rodada} de 9`;
+  const m=RUN.monster;
+  el("over-monster").innerHTML=`<div class="mcard-n">${m.nome}</div><div class="mcard-s" style="margin-top:8px"><div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div><div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div><div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div><div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div></div>${m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:""}`;
+  mostrar("t-over");
+}
+function rlVitoria(){
+  const m=RUN.monster;
+  el("win-monster").innerHTML=`<div class="mcard-n">${m.nome}</div><div class="mcard-s" style="margin-top:8px"><div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div><div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div><div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div><div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div></div>${m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:""}`;
+  mostrar("t-win");
+}
+el("btn-over").addEventListener("click",()=>location.reload());
+el("btn-win").addEventListener("click",()=>location.reload());
+
+// ═══════════════════════════════════════════════
+//  FLUXO ONLINE (Socket.IO)
+// ═══════════════════════════════════════════════
+let socket=null;
+let modoAtual=null;
+let dif=null;
+let nomeJog="";
+let onlineSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+let onlineCat=null;
+let timerIv=null;
+
+function getNome(){return el("inp-nome").value.trim()}
+
+// Botão Roguelike (funciona offline e online)
+el("btn-rl").addEventListener("click",()=>{
+  nomeJog=getNome();if(!nomeJog){mostrarErro("Digite seu nome.");return}
+  novaRun(nomeJog);rlIniciarDraft();
+});
+// Partida Rápida
+el("btn-solo").addEventListener("click",()=>{
+  nomeJog=getNome();if(!nomeJog){mostrarErro("Digite seu nome.");return}
+  modoAtual="solo";mostrar("t-dif");
+});
+// Multijogador
+el("btn-multi").addEventListener("click",()=>{
+  nomeJog=getNome();if(!nomeJog){mostrarErro("Digite seu nome.");return}
+  modoAtual="multi";mostrar("t-multi");
+});
+el("btn-vlt-ent").addEventListener("click",()=>mostrar("t-entrada"));
+el("btn-vlt-multi").addEventListener("click",()=>mostrar("t-entrada"));
+
+document.querySelectorAll(".btn-dif").forEach(b=>{
+  b.addEventListener("click",()=>{
+    dif=b.dataset.dif;
+    socket.emit("entrar_sala",{nome:nomeJog,sala:"SOLO_"+Date.now()});
+  });
+});
+el("btn-entrar-sala").addEventListener("click",()=>{
+  const sala=el("inp-sala").value.trim();if(!sala)return;
+  socket.emit("entrar_sala",{nome:nomeJog,sala});
+});
+
+// Eventos online
+function bindSocket(s){
+  s.on("entrou_sala",({sala})=>{
+    if(modoAtual==="solo"){s.emit("pedir_catalogo")}
+    else{el("nome-sala").textContent=sala;mostrar("t-lobby")}
+  });
+  s.on("sala_atualizada",({jogadores,min})=>{
+    const ul=el("lista-lobby");ul.innerHTML="";
+    jogadores.forEach(j=>{const li=document.createElement("li");li.textContent=j.nome;if(j.pronto)li.classList.add("pronto");ul.appendChild(li)});
+    const f=min-jogadores.length;
+    el("info-lobby").textContent=f>0?`Aguardando... (faltam ${f})`:"Todos prontos? Clique em Estou Pronto!";
+  });
+  el("btn-pronto").onclick=()=>{s.emit("marcar_pronto");el("btn-pronto").disabled=true;el("btn-pronto").textContent="Aguardando..."};
+
+  s.on("fase_criacao",({duracao,catalogo:cat})=>{
+    onlineCat=cat;onlineSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+    renderSlots("slots-online",onlineSel,onlineCat,onlineAtuPreview);onlineAtuPreview();
+    if(modoAtual==="solo"){el("timer-box").style.display="none";el("btn-confirmar").textContent="⚔️ Batalhar!"}
+    else{el("timer-box").style.display="";iniciarTimer(duracao)}
+    mostrar("t-criacao");
+  });
+  s.on("timer_criacao",({restante})=>{el("timer-num").textContent=restante;if(restante<=10)el("timer-box").classList.add("urgente")});
+
+  el("btn-confirmar").onclick=()=>{
+    const nome=el("inp-mn").value.trim()||"Monstro";
+    const pecas=Object.values(onlineSel).filter(Boolean);
+    if(modoAtual==="solo"){s.emit("iniciar_solo",{dificuldade:dif,nome,pecas});el("btn-confirmar").disabled=true;el("btn-confirmar").textContent="⚔️ Entrando..."}
+    else{s.emit("submeter_monster",{nome,pecas});el("btn-confirmar").disabled=true;el("btn-confirmar").textContent="✅ Aguardando..."}
+  };
+
+  s.on("fase_revelacao",({monstros})=>{
+    const g=el("grid-monstros");g.innerHTML="";
+    monstros.forEach((m,i)=>{
+      const c=document.createElement("div");c.className="mr-card";c.style.animationDelay=`${i*.15}s`;
+      const emojis=Object.values(m.pecas).filter(id=>id&&id!=="asas_nenhuma").map(id=>{const p=PECAS[id];return p?p.emoji:"👾"}).slice(0,4).join(" ");
+      c.innerHTML=`<div class="mr-e">${emojis||"👾"}</div><div class="mr-n">${m.nome}${m.isBot?' <span class="badge-bot">🤖</span>':""}</div><div class="mr-j">por ${m.jogadorNome}</div><div class="mvc-s"><span class="sp">❤️ ${m.stats.hp}</span><span class="sp">⚔️ ${m.stats.atk}</span><span class="sp">🛡️ ${m.stats.def}</span><span class="sp">⚡ ${m.stats.spd}</span></div>`;
+      g.appendChild(c);
+    });mostrar("t-rev");
+  });
+
+  s.on("fase_combate",({totalConfrontos})=>{el("bat-tot").textContent=totalConfrontos;el("bat-at").textContent=1;el("log").innerHTML="";mostrar("t-combate")});
+  s.on("resultado_batalha",({confrontoAtual,total,nomeA,nomeB,log})=>{
+    const statsEvt=log.find(l=>l.t==="stats");
+    initCombateUI(nomeA,nomeB,statsEvt?.a?.hp||1,statsEvt?.b?.hp||1,confrontoAtual,total);
+    animarLog(log,nomeA,nomeB,null);
+  });
+
+  s.on("resultado_final",({ranking})=>{
+    const div=el("ranking");div.innerHTML="";
+    const medals=["🥇","🥈","🥉"];
+    ranking.forEach((item,i)=>{
+      const row=document.createElement("div");row.className="rank-i";
+      row.innerHTML=`<div class="rank-pos">${medals[i]||`${i+1}º`}</div><div class="rank-inf"><div class="rank-n">${item.monster.nome}</div><div class="rank-j">${item.isBot?"🤖 Bot":`👤 ${item.nome}`}</div></div><div class="rank-w">${item.vitorias}W</div>`;
+      div.appendChild(row);
+    });mostrar("t-result");
+  });
+
+  s.on("erro",msg=>{mostrarErro(msg);mostrar("t-entrada")});
+}
+
+el("btn-novo").addEventListener("click",()=>location.reload());
+
+function onlineAtuPreview(){
+  if(!onlineCat)return;
+  const s=calcPreviewStats(onlineSel,onlineCat);
+  const emojis=SLOTS.map(sl=>{const p=onlineCat[sl]?.find(x=>x.id===onlineSel[sl]);return(p&&p.id!=="asas_nenhuma")?p.emoji:""}).filter(Boolean).join(" ");
+  el("op-emoji").textContent=emojis||"❓";el("op-nome").textContent=el("inp-mn").value.trim()||"Monstro Sem Nome";
+  el("op-hp").textContent=Math.max(10,s.hp);el("op-atk").textContent=Math.max(1,s.atk);
+  el("op-def").textContent=Math.max(0,s.def);el("op-spd").textContent=Math.max(1,s.spd);
+  el("btn-confirmar").disabled=!(onlineSel.cabeca&&onlineSel.corpo&&onlineSel.membros);
+}
+el("inp-mn").addEventListener("input",onlineAtuPreview);
+
+function iniciarTimer(total){
+  clearInterval(timerIv);let r=total;el("timer-num").textContent=r;
+  timerIv=setInterval(()=>{r--;el("timer-num").textContent=r;if(r<=10)el("timer-box").classList.add("urgente");if(r<=0)clearInterval(timerIv)},1000);
+}
+
+// ═══════════════════════════════════════════════
+//  DETECÇÃO DE SERVIDOR
+// ═══════════════════════════════════════════════
+(function detectarServidor(){
+  const sc=document.createElement("script");
+  sc.src="/socket.io/socket.io.js";
+  sc.onload=()=>{
+    const s=io({timeout:3000,reconnection:false});
+    s.on("connect",()=>{
+      socket=s;bindSocket(s);
+      el("status-conexao").textContent="🟢 Online — todos os modos disponíveis";
+      el("status-conexao").className="status-conexao online";
+      document.querySelectorAll(".btn-online").forEach(b=>b.style.display="");
+    });
+    s.on("connect_error",()=>modoOffline());
+  };
+  sc.onerror=()=>modoOffline();
+  document.head.appendChild(sc);
+  setTimeout(()=>{if(!socket)modoOffline()},3500);
+})();
+
+function modoOffline(){
+  el("status-conexao").textContent="🔴 Offline — apenas Roguelike disponível";
+  el("status-conexao").className="status-conexao offline";
+  document.querySelectorAll(".btn-online").forEach(b=>b.style.display="none");
+}
+</script>
 </body>
 </html>
