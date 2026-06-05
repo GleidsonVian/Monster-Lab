@@ -184,6 +184,22 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .rc-prev-row span:first-child{color:var(--muted)}
 .rc-prev-troca{font-size:.78rem;margin-top:8px;padding:5px 9px;border-radius:6px;
   background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2)}
+/* Eventos */
+.ev-opcao{display:flex;align-items:center;gap:14px;padding:14px 16px;
+  border-radius:12px;border:2px solid var(--border);background:rgba(255,255,255,.03);
+  cursor:pointer;text-align:left;margin-bottom:9px;transition:all .15s}
+.ev-opcao:hover{border-color:var(--accent2);background:rgba(245,158,11,.07)}
+.ev-opcao.ev-perigo:hover{border-color:var(--danger);background:rgba(239,68,68,.07)}
+.ev-icone-g{font-size:2rem;flex-shrink:0}
+.ev-titulo-op{font-weight:700;font-size:.95rem}
+.ev-sub-op{font-size:.78rem;color:var(--muted);margin-top:2px}
+.ev-diff{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.ev-diff span{font-size:.7rem;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.07)}
+.ev-diff .pos{background:rgba(34,197,94,.15);color:var(--accent)}
+.ev-diff .neg{background:rgba(239,68,68,.15);color:var(--danger)}
+.ev-bonus-pip{font-size:.72rem;padding:2px 8px;border-radius:99px;
+  background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25);
+  color:var(--accent2);display:inline-block;margin-top:6px}
 
 /* Revelação multi */
 #grid-monstros{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:6px 0}
@@ -362,6 +378,18 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
     </div>
     <div id="log"></div>
     <div class="prog">Batalha <span id="bat-at">—</span> de <span id="bat-tot">—</span></div>
+  </div>
+</div>
+
+<!-- EVENTO ALEATÓRIO -->
+<div id="t-evento" class="tela">
+  <div class="card">
+    <div id="ev-icone" style="font-size:2.8rem;margin-bottom:8px"></div>
+    <div id="ev-subtitulo" style="font-size:.75rem;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Evento</div>
+    <h2 id="ev-nome"></h2>
+    <p class="info" id="ev-desc" style="margin-bottom:16px"></p>
+    <div id="ev-opcoes"></div>
+    <button id="ev-btn-pular" class="btn-sec" style="margin-top:10px">Ignorar e continuar →</button>
   </div>
 </div>
 
@@ -591,7 +619,7 @@ function adDot(c,d){const e=c.dots.find(x=>x.t===d.t);if(e)e.turns=Math.max(e.tu
 //  ROGUELIKE (client-side, sem servidor)
 // ═══════════════════════════════════════════════
 let RUN=null;
-function novaRun(nome){RUN={nome,rodada:0,monster:null,reliquias:[]}}
+function novaRun(nome){RUN={nome,rodada:0,monster:null,reliquias:[],bonusPendentes:[]}}
 
 function rlGerarInimigo(rodada){
   const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
@@ -745,6 +773,109 @@ function atuHP(nome,hp,nA,nB){
 //  FLUXO ROGUELIKE
 // ═══════════════════════════════════════════════
 let rlSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+
+// ── Eventos aleatórios ────────────────────────────────────────────────────
+const EVENTOS=[
+  {id:"mercador", nome:"Mercador Ambulante", icone:"🏪", desc:"Um mercador misterioso oferece peças raras em troca. Não é obrigado a aceitar."},
+  {id:"altar",    nome:"Altar das Sombras",  icone:"⛩️", desc:"O altar pulsa com energia sombria. Sacrifique HP em troca de poder antigo."},
+  {id:"treino",   nome:"Campo de Treino",    icone:"⚔️", desc:"Você pode treinar intensamente agora ou distribuir o esforço ao longo do tempo."},
+];
+
+function rlMostrarEvento(){
+  const m=RUN.monster;
+  const disponiveis=EVENTOS.filter(e=>{
+    if(e.id==="altar")return m.stats.hp>35&&m.reliquias.length<3&&RELIQUIAS.some(r=>!m.reliquias.includes(r.id));
+    return true;
+  });
+  const ev=disponiveis[Math.floor(Math.random()*disponiveis.length)];
+  el("ev-icone").textContent=ev.icone;
+  el("ev-nome").textContent=ev.nome;
+  el("ev-desc").textContent=ev.desc;
+  const cont=el("ev-opcoes");cont.innerHTML="";
+  if(ev.id==="mercador")renderEvMercador(cont);
+  else if(ev.id==="altar")renderEvAltar(cont);
+  else if(ev.id==="treino")renderEvTreino(cont);
+  mostrar("t-evento");
+}
+
+function evProsseguir(){setTimeout(()=>rlPreCombate(),200)}
+
+function renderEvMercador(cont){
+  // Oferece 2 slots aleatórios com peça rara/lendária cada
+  const slotsDisp=[...SLOTS].sort(()=>Math.random()-.5).slice(0,2);
+  slotsDisp.forEach(slot=>{
+    const pool=Object.values(PECAS).filter(p=>p.slot===slot&&(p.raridade==="rara"||p.raridade==="lendaria"));
+    if(!pool.length)return;
+    const nova=pool[Math.floor(Math.random()*pool.length)];
+    const velha=PECAS[RUN.monster.pecas[slot]];
+    // Calcula diff de stats
+    const d={hp:0,atk:0,def:0,spd:0};
+    if(velha){d.hp-=velha.stats.hp;d.atk-=velha.stats.atk;d.def-=velha.stats.def;d.spd-=velha.stats.spd}
+    d.hp+=nova.stats.hp;d.atk+=nova.stats.atk;d.def+=nova.stats.def;d.spd+=nova.stats.spd;
+    const diffTags=Object.entries({hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"})
+      .filter(([k])=>d[k]!==0)
+      .map(([k,e])=>`<span class="${d[k]>0?"pos":"neg"}">${e}${d[k]>0?"+":""}${d[k]}</span>`).join("");
+    const div=document.createElement("div");div.className="ev-opcao";
+    div.innerHTML=`<span class="ev-icone-g">${nova.emoji}</span><div>
+      <div class="ev-titulo-op">${nova.nome} <span class="br ${nova.raridade}">${nova.raridade}</span></div>
+      <div class="ev-sub-op">Substitui ${SLOT_L[slot]}: ${velha?velha.nome:"—"}</div>
+      <div class="ev-diff">${diffTags||'<span>Sem mudança de stats</span>'}</div>
+    </div>`;
+    div.addEventListener("click",()=>{
+      rlAplicarRecomp(RUN.monster,{tipo:"peca_swap",slot,peca:nova});
+      evProsseguir();
+    });
+    cont.appendChild(div);
+  });
+}
+
+function renderEvAltar(cont){
+  const custo=20;
+  const dispRels=RELIQUIAS.filter(r=>!RUN.monster.reliquias.includes(r.id));
+  const rel=dispRels[Math.floor(Math.random()*dispRels.length)];
+  const div=document.createElement("div");div.className="ev-opcao ev-perigo";
+  div.innerHTML=`<span class="ev-icone-g">${rel.emoji}</span><div>
+    <div class="ev-titulo-op">${rel.nome}</div>
+    <div class="ev-sub-op">${rel.desc}</div>
+    <div class="ev-diff"><span class="neg">❤️-${custo} HP</span></div>
+  </div>`;
+  div.addEventListener("click",()=>{
+    RUN.monster.stats.hp=Math.max(1,RUN.monster.stats.hp-custo);
+    rlAplicarRecomp(RUN.monster,{tipo:"reliquia",reliquia:rel});
+    evProsseguir();
+  });
+  cont.appendChild(div);
+}
+
+function renderEvTreino(cont){
+  const statKeys=["hp","atk","def","spd"];
+  const statLabel={"hp":"❤️ Vida","atk":"⚔️ Ataque","def":"🛡️ Defesa","spd":"⚡ Velocidade"};
+  const stat=statKeys[Math.floor(Math.random()*statKeys.length)];
+  const lbl=statLabel[stat];
+  const grande=28,parcela=15;
+  // Opção A: tudo agora
+  const a=document.createElement("div");a.className="ev-opcao";
+  a.innerHTML=`<span class="ev-icone-g">💪</span><div>
+    <div class="ev-titulo-op">Treino Intenso</div>
+    <div class="ev-sub-op">${lbl} agora mesmo</div>
+    <div class="ev-diff"><span class="pos">${lbl.split(" ")[0]}+${grande}</span></div>
+  </div>`;
+  a.addEventListener("click",()=>{RUN.monster.stats[stat]+=grande;evProsseguir()});
+  // Opção B: parcelado
+  const b=document.createElement("div");b.className="ev-opcao";
+  b.innerHTML=`<span class="ev-icone-g">📈</span><div>
+    <div class="ev-titulo-op">Treino Prolongado</div>
+    <div class="ev-sub-op">${lbl} agora + ${lbl} antes da próxima batalha</div>
+    <div class="ev-diff"><span class="pos">${lbl.split(" ")[0]}+${parcela} agora</span><span class="ev-bonus-pip">+${parcela} pendente</span></div>
+  </div>`;
+  b.addEventListener("click",()=>{
+    RUN.monster.stats[stat]+=parcela;
+    RUN.bonusPendentes=RUN.bonusPendentes||[];
+    RUN.bonusPendentes.push({stat,valor:parcela,label:lbl});
+    evProsseguir();
+  });
+  cont.appendChild(a);cont.appendChild(b);
+}
 let rlCat=null;
 let inimigoAtual=null;
 
@@ -806,6 +937,16 @@ el("rl-btn-ok").addEventListener("click",()=>{
 });
 
 function rlPreCombate(){
+  // Aplica bônus pendente do Treino Prolongado
+  if(RUN.bonusPendentes&&RUN.bonusPendentes.length>0){
+    const b=RUN.bonusPendentes.shift();
+    RUN.monster.stats[b.stat]+=b.valor;
+    // Notificação rápida
+    const pip=document.createElement("div");
+    pip.style.cssText="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:#111827;border:1px solid #f59e0b;border-radius:10px;padding:10px 20px;font-family:inherit;color:#f59e0b;font-weight:700";
+    pip.textContent=`📈 Treino: +${b.valor} ${b.label} aplicado!`;
+    document.body.appendChild(pip);setTimeout(()=>pip.remove(),2500);
+  }
   inimigoAtual=rlGerarInimigo(RUN.rodada);
   const isBoss=RUN.rodada%3===0;
   const zi=Math.min(Math.floor((RUN.rodada-1)/3),2);const zona=ZONAS[zi];
@@ -905,7 +1046,11 @@ function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
       // Boss: ainda tem mais 1 recompensa
       setTimeout(()=>rlMostrarRecomp(recompensasRestantes-1),200);
     } else {
-      RUN.rodada++;setTimeout(()=>rlPreCombate(),200);
+      const rodadaCompletada=RUN.rodada;
+      RUN.rodada++;
+      const foiBoss=rodadaCompletada%3===0;
+      const temEvento=!foiBoss&&Math.random()<0.40;
+      setTimeout(()=>temEvento?rlMostrarEvento():rlPreCombate(),200);
     }
   };
   el("rc-btn-nao").onclick=()=>{
@@ -925,6 +1070,7 @@ function rlVitoria(){
   el("win-monster").innerHTML=`<div class="mcard-n">${m.nome}</div><div class="mcard-s" style="margin-top:8px"><div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div><div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div><div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div><div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div></div>${m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:""}`;
   mostrar("t-win");
 }
+el("ev-btn-pular").addEventListener("click",()=>evProsseguir());
 el("btn-over").addEventListener("click",()=>location.reload());
 el("btn-win").addEventListener("click",()=>location.reload());
 
