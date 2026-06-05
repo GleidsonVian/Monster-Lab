@@ -204,6 +204,51 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .rc-prev-row span:first-child{color:var(--muted)}
 .rc-prev-troca{font-size:.78rem;margin-top:8px;padding:5px 9px;border-radius:6px;
   background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2)}
+/* Draft novo layout */
+.draft-wrap{width:100%;max-width:1000px;background:var(--card);
+  border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.draft-header{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:10px;padding:18px 24px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02)}
+.draft-name-inp{width:220px;padding:9px 14px;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:9px;color:var(--text);
+  font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s}
+.draft-name-inp:focus{border-color:var(--accent)}
+.draft-name-inp::placeholder{color:var(--muted)}
+.draft-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-bottom:1px solid var(--border)}
+.dg-col{display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.dg-col:last-child{border-right:none}
+.dg-label{font-size:.68rem;font-weight:700;letter-spacing:1px;color:var(--muted);
+  text-transform:uppercase;text-align:center;padding:10px 6px 8px;
+  border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.dg-options{display:flex;flex-direction:column;gap:0}
+.dgp{display:flex;flex-direction:column;align-items:center;padding:14px 10px 12px;
+  gap:5px;cursor:pointer;text-align:center;transition:all .15s;
+  border-bottom:1px solid rgba(255,255,255,.04);position:relative}
+.dgp:last-child{border-bottom:none}
+.dgp:hover{background:rgba(34,197,94,.07)}
+.dgp.sel{background:rgba(34,197,94,.12)}
+.dgp.sel::after{content:"✓";position:absolute;top:6px;right:8px;
+  font-size:.7rem;color:var(--accent);font-weight:700}
+.dgp.rara:hover,.dgp.rara.sel{background:rgba(168,85,247,.1)}
+.dgp.rara.sel::after{color:var(--rare)}
+.dgp.lendaria:hover,.dgp.lendaria.sel{background:rgba(245,158,11,.08)}
+.dgp.lendaria.sel::after{color:var(--legendary)}
+.dgp .dpe{font-size:2.4rem}
+.dgp .dpn{font-size:.75rem;font-weight:600;line-height:1.2;color:var(--text)}
+.dgp .dpb{font-size:.58rem;padding:1px 5px;border-radius:3px;margin-top:1px}
+.dgp .dp-stats{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px}
+.dgp .dp-st{font-size:.62rem;padding:2px 5px;border-radius:3px;
+  background:rgba(255,255,255,.07);color:var(--text)}
+.draft-footer{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:16px 24px;background:rgba(255,255,255,.02);border-top:1px solid var(--border)}
+.draft-fp-emojis{font-size:1.6rem;letter-spacing:3px;flex-shrink:0}
+.draft-fp-nome{font-weight:700;color:var(--accent2);font-size:.95rem;flex-shrink:0}
+.draft-fp-stats{display:flex;gap:14px;font-size:.88rem;flex-wrap:wrap}
+.draft-fp-stats b{color:var(--text)}
+@media(max-width:700px){.draft-grid{grid-template-columns:repeat(2,1fr)}}
+
 /* Eventos */
 .ev-opcao{display:flex;align-items:center;gap:14px;padding:14px 16px;
   border-radius:12px;border:2px solid var(--border);background:rgba(255,255,255,.03);
@@ -334,30 +379,31 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 
 <!-- DRAFT ROGUELIKE -->
 <div id="t-draft" class="tela">
-  <div class="cl">
-    <div class="cl-head">
-      <h2>⚔️ Escolha suas Peças</h2>
-      <div class="rl-badge" id="badge-rod">Rodada 1 de 9</div>
-    </div>
-    <div class="cl-body">
-      <div class="p-pecas">
-        <div class="nome-row"><input id="rl-inp-mn" type="text" placeholder="Nome do monstro" maxlength="25"/></div>
-        <div id="rl-slots"></div>
+  <div class="draft-wrap">
+
+    <div class="draft-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h2 style="margin:0;font-size:1.3rem">⚔️ Escolha suas Peças</h2>
+        <div class="rl-badge" id="badge-rod">Rodada 1 de 9</div>
       </div>
-      <div class="p-prev">
-        <div class="mcard">
-          <div class="mcard-e" id="rl-emoji">❓</div>
-          <div class="mcard-n"  id="rl-nome">?????</div>
-          <div class="mcard-s">
-            <div class="mst"><span class="msl">❤️ Vida</span>      <span id="rl-hp">—</span></div>
-            <div class="mst"><span class="msl">⚔️ Ataque</span>    <span id="rl-atk">—</span></div>
-            <div class="mst"><span class="msl">🛡️ Defesa</span>    <span id="rl-def">—</span></div>
-            <div class="mst"><span class="msl">⚡ Velocidade</span><span id="rl-spd">—</span></div>
-          </div>
-        </div>
-        <button id="rl-btn-ok" disabled>⚔️ Batalhar!</button>
-      </div>
+      <input id="rl-inp-mn" class="draft-name-inp" type="text" placeholder="Nome do monstro" maxlength="25"/>
     </div>
+
+    <div id="rl-slots" class="draft-grid"></div>
+
+    <div class="draft-footer">
+      <div class="draft-fp-emojis" id="rl-emoji">❓</div>
+      <div class="draft-fp-nome" id="rl-nome">Monstro Sem Nome</div>
+      <div class="draft-fp-stats">
+        <span>❤️ <b id="rl-hp">—</b></span>
+        <span>⚔️ <b id="rl-atk">—</b></span>
+        <span>🛡️ <b id="rl-def">—</b></span>
+        <span>⚡ <b id="rl-spd">—</b></span>
+      </div>
+      <div id="rl-extra" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center"></div>
+      <button id="rl-btn-ok" disabled style="width:auto;padding:11px 28px;white-space:nowrap;flex-shrink:0">⚔️ Batalhar!</button>
+    </div>
+
   </div>
 </div>
 
@@ -726,6 +772,35 @@ function renderSlots(containerId,selObj,cat,onChange){
   }
 }
 
+// renderDraftGrid: colunas por slot para o roguelike draft
+function renderDraftGrid(containerId,selObj,cat,onChange){
+  const cont=el(containerId);cont.innerHTML="";
+  for(const[slot,pecas]of Object.entries(cat)){
+    const col=document.createElement("div");col.className="dg-col";
+    const lbl=document.createElement("div");lbl.className="dg-label";lbl.textContent=SLOT_L[slot]||slot;col.appendChild(lbl);
+    const opts=document.createElement("div");opts.className="dg-options";
+    pecas.forEach(p=>{
+      const card=document.createElement("div");card.className=`dgp ${p.raridade}`;card.dataset.slot=slot;card.dataset.id=p.id;
+      const st=p.stats;
+      const tags=[
+        st.hp !==0?`<span class="dp-st">❤️${st.hp >0?"+":""}${st.hp}</span>`:"",
+        st.atk!==0?`<span class="dp-st">⚔️+${st.atk}</span>`:"",
+        st.def!==0?`<span class="dp-st">🛡️+${st.def}</span>`:"",
+        st.spd!==0?`<span class="dp-st">⚡${st.spd>0?"+":""}${st.spd}</span>`:"",
+      ].filter(Boolean).join("");
+      card.innerHTML=`<span class="dpe">${p.emoji}</span><span class="dpn">${p.nome}</span><span class="dpb br ${p.raridade}">${p.raridade}</span><div class="dp-stats">${tags||'<span class="dp-st" style="color:var(--muted)">—</span>'}</div>`;
+      card.title=p.descricao;
+      if(selObj[slot]===p.id||(selObj[slot]==null&&p.id==="asas_nenhuma"))card.classList.add("sel");
+      card.addEventListener("click",()=>{
+        opts.querySelectorAll(".dgp").forEach(x=>x.classList.remove("sel"));
+        card.classList.add("sel");selObj[slot]=p.id;onChange();
+      });
+      opts.appendChild(card);
+    });
+    col.appendChild(opts);cont.appendChild(col);
+  }
+}
+
 function calcPreviewStats(selObj,cat){
   const s={hp:50,atk:0,def:0,spd:0};
   Object.values(selObj).filter(Boolean).forEach(id=>{
@@ -926,7 +1001,7 @@ function rlIniciarDraft(){
     rlCat[sl]=opts;
   });
 
-  renderSlots("rl-slots",rlSel,rlCat,rlAtuPreview);
+  renderDraftGrid("rl-slots",rlSel,rlCat,rlAtuPreview);
   rlAtuPreview();mostrar("t-draft");
 }
 function rlAtuPreview(){
