@@ -595,7 +595,10 @@ function novaRun(nome){RUN={nome,rodada:0,monster:null,reliquias:[]}}
 
 function rlGerarInimigo(rodada){
   const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
-  const mult=1+(rodada-1)*0.13*(isBoss?1.3:1);
+  // Ajuste 1: escala reduzida de 13% → 8% por rodada
+  // Ajuste 2: boss sem multiplicador duplo (apenas +20% flat)
+  const mult=1+(rodada-1)*0.08;
+  const bm=isBoss?1.2:1;
   let nome,ids;
   if(isBoss){const b=BOSSES[Math.floor(rodada/3)-1];nome=b.nome+"  👑";ids=b.pecas}
   else{
@@ -605,23 +608,28 @@ function rlGerarInimigo(rodada){
   }
   const{stats,efeitos}=calcStats(ids);const combos=verifCombos(ids);
   combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
-  const bm=isBoss?1.3:1;
   stats.hp=Math.max(10,Math.floor(stats.hp*mult*bm));stats.atk=Math.max(1,Math.floor(stats.atk*mult*bm));
   stats.def=Math.max(0,Math.floor(stats.def*mult*bm));stats.spd=Math.max(1,Math.floor(stats.spd*mult));
   const pecas={};ids.forEach(id=>{const p=PECAS[id];if(p)pecas[p.slot]=id});
   return{id:"inimigo",nome,pecas,stats,efeitos,combos,isBoss};
 }
 function rlGerarRecomp(rodada,monster){
-  const r=rodada,pool=[];
-  pool.push({tipo:"stat_boost",stat:"hp", valor:15+r*3,emoji:"❤️",label:`+${15+r*3} Vida Máxima`});
-  pool.push({tipo:"stat_boost",stat:"atk",valor:8+r*2, emoji:"⚔️",label:`+${8+r*2} Ataque`});
-  pool.push({tipo:"stat_boost",stat:"def",valor:5+r,   emoji:"🛡️",label:`+${5+r} Defesa`});
-  pool.push({tipo:"stat_boost",stat:"spd",valor:4+r,   emoji:"⚡",label:`+${4+r} Velocidade`});
-  if(r>=2)pool.push({tipo:"full_heal",emoji:"💊",label:"+30 Vida"});
+  // Ajuste 3: valores maiores nos rounds finais (multiplicador extra após rodada 5)
+  const r=rodada;
+  const bonus=r>=7?2:r>=5?1.5:1;
+  const vHP =Math.floor((15+r*4)*bonus);
+  const vATK=Math.floor((10+r*3)*bonus);
+  const vDEF=Math.floor((6+r*1.5)*bonus);
+  const vSPD=Math.floor((5+r*1.2)*bonus);
+  const pool=[];
+  pool.push({tipo:"stat_boost",stat:"hp", valor:vHP, emoji:"❤️",label:`+${vHP} Vida Máxima`});
+  pool.push({tipo:"stat_boost",stat:"atk",valor:vATK,emoji:"⚔️",label:`+${vATK} Ataque`});
+  pool.push({tipo:"stat_boost",stat:"def",valor:vDEF,emoji:"🛡️",label:`+${vDEF} Defesa`});
+  pool.push({tipo:"stat_boost",stat:"spd",valor:vSPD,emoji:"⚡",label:`+${vSPD} Velocidade`});
+  if(r>=2)pool.push({tipo:"full_heal",emoji:"💊",label:"+40 Vida"});
   const sl=SLOTS[Math.floor(Math.random()*SLOTS.length)];
   const rp=Object.values(PECAS).filter(p=>p.slot===sl&&(p.raridade==="rara"||p.raridade==="lendaria"));
   if(rp.length){const np=rp[Math.floor(Math.random()*rp.length)];pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,peca:np})}
-  // Relíquia só se tiver espaço (máx 3)
   if(r>=2&&monster.reliquias.length<3){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:`${rl.nome} (${monster.reliquias.length+1}/3)`,desc:rl.desc,reliquia:rl})}}
   return pool.sort(()=>Math.random()-.5).slice(0,3);
 }
@@ -816,9 +824,13 @@ function rlPreCombate(){
   },2200);
 }
 
-function rlMostrarRecomp(){
+function rlMostrarRecomp(recompensasRestantes){
   if(RUN.rodada>=9){rlVitoria();return}
-  el("rc-info").textContent=`Rodada ${RUN.rodada} de 9 concluída`;
+  // Ajuste 4: boss dá 2 recompensas
+  const isBoss=RUN.rodada%3===0;
+  if(recompensasRestantes===undefined)recompensasRestantes=isBoss?2:1;
+  const label=isBoss&&recompensasRestantes===2?`👑 Boss! Escolha 1 de 2 recompensas`:`Rodada ${RUN.rodada} de 9 concluída`;
+  el("rc-info").textContent=label;
   const recomp=rlGerarRecomp(RUN.rodada,RUN.monster);
   const grid=el("rc-opcoes");grid.innerHTML="";
 
@@ -836,14 +848,14 @@ function rlMostrarRecomp(){
     card.addEventListener("click",()=>{
       grid.querySelectorAll(".rc").forEach(c=>c.classList.remove("rc-sel"));
       card.classList.add("rc-sel");
-      mostrarPreviewRecomp(r,previewDiv);
+      mostrarPreviewRecomp(r,previewDiv,recompensasRestantes);
     });
     grid.appendChild(card);
   });
   mostrar("t-recomp");
 }
 
-function mostrarPreviewRecomp(r,div){
+function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
   const m=RUN.monster;
   const antes={...m.stats};
   const depois={...m.stats};
@@ -887,7 +899,15 @@ function mostrarPreviewRecomp(r,div){
     </div>`;
   div.style.display="block";
 
-  el("rc-btn-ok").onclick=()=>{ rlAplicarRecomp(RUN.monster,r); RUN.rodada++; setTimeout(()=>rlPreCombate(),200) };
+  el("rc-btn-ok").onclick=()=>{
+    rlAplicarRecomp(RUN.monster,r);
+    if(recompensasRestantes>1){
+      // Boss: ainda tem mais 1 recompensa
+      setTimeout(()=>rlMostrarRecomp(recompensasRestantes-1),200);
+    } else {
+      RUN.rodada++;setTimeout(()=>rlPreCombate(),200);
+    }
+  };
   el("rc-btn-nao").onclick=()=>{
     div.innerHTML="";div.style.display="none";
     el("rc-opcoes").querySelectorAll(".rc").forEach(c=>c.classList.remove("rc-sel"));
