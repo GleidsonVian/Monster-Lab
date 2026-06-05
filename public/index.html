@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧛 Caça Vampiros</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- TELA: Entrada -->
+  <div id="tela-entrada" class="tela ativa">
+    <div class="card">
+      <h1>🧛 Caça Vampiros</h1>
+      <p class="subtitulo">Um jogo de dedução social</p>
+      <input id="input-nome" type="text" placeholder="Seu nome" maxlength="20" />
+      <input id="input-sala" type="text" placeholder="Código da sala (ex: BLACKWOOD)" maxlength="10" />
+      <button id="btn-entrar">Entrar na Sala</button>
+      <p id="msg-erro" class="erro hidden"></p>
+    </div>
+  </div>
+
+  <!-- TELA: Lobby -->
+  <div id="tela-lobby" class="tela">
+    <div class="card">
+      <h2>Sala: <span id="nome-sala"></span></h2>
+      <p class="info">Aguardando jogadores... (mínimo 4)</p>
+      <ul id="lista-jogadores"></ul>
+      <button id="btn-pronto">Estou Pronto ✓</button>
+    </div>
+  </div>
+
+  <!-- TELA: Papel -->
+  <div id="tela-papel" class="tela">
+    <div class="card">
+      <div id="papel-emoji" class="papel-emoji"></div>
+      <h2 id="papel-nome"></h2>
+      <p id="papel-descricao"></p>
+      <div id="aliados-container" class="hidden">
+        <p>Seus aliados vampiros: <span id="papel-aliados"></span></p>
+      </div>
+      <p class="info">A noite começa em instantes...</p>
+    </div>
+  </div>
+
+  <!-- TELA: Noite -->
+  <div id="tela-noite" class="tela">
+    <div class="card dark">
+      <h2>🌙 Noite <span id="num-noite"></span></h2>
+      <p id="instrucao-noite" class="info"></p>
+      <ul id="lista-alvos-noite"></ul>
+      <p id="msg-aguardo" class="info hidden">Aguardando os outros...</p>
+    </div>
+  </div>
+
+  <!-- TELA: Amanhecer -->
+  <div id="tela-amanhecer" class="tela">
+    <div class="card">
+      <h2>☀️ Amanheceu</h2>
+      <div id="mensagens-amanhecer"></div>
+    </div>
+  </div>
+
+  <!-- TELA: Discussão -->
+  <div id="tela-discussao" class="tela">
+    <div class="card">
+      <h2>💬 Discussão</h2>
+      <p class="info">Debatam no Discord! Depois vote em quem deve ser executado.</p>
+      <div class="timer-box">⏱ <span id="timer-discussao"></span>s</div>
+      <ul id="lista-votos"></ul>
+      <p id="msg-voto-ok" class="info hidden">Voto registrado!</p>
+    </div>
+  </div>
+
+  <!-- TELA: Julgamento -->
+  <div id="tela-julgamento" class="tela">
+    <div class="card">
+      <h2>⚖️ Julgamento</h2>
+      <p>O acusado é: <strong id="nome-acusado"></strong></p>
+      <p class="info">Ele tem <span id="timer-defesa"></span>s para se defender no Discord.</p>
+    </div>
+  </div>
+
+  <!-- TELA: Caçador -->
+  <div id="tela-cacador" class="tela">
+    <div class="card">
+      <h2>🔫 Você está morrendo!</h2>
+      <p>Escolha alguém para levar junto:</p>
+      <ul id="lista-alvos-cacador"></ul>
+    </div>
+  </div>
+
+  <!-- TELA: Fim -->
+  <div id="tela-fim" class="tela">
+    <div class="card">
+      <h2 id="titulo-fim"></h2>
+      <p id="msg-fim"></p>
+      <div id="resultado-fim"></div>
+      <button id="btn-jogar-novamente">Jogar Novamente</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/client.js"></script>
+</body>
+</html>
