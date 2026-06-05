@@ -253,6 +253,12 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .dgp .dp-stats{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px}
 .dgp .dp-st{font-size:.62rem;padding:2px 5px;border-radius:3px;
   background:rgba(255,255,255,.07);color:var(--text)}
+/* Peça Única */
+.dgp.unica,.pb.unica{border-color:rgba(100,200,255,.4)!important}
+.dgp.unica:hover,.dgp.unica.sel{background:rgba(100,200,255,.1)!important;border-color:rgba(100,200,255,.7)!important}
+.br.unica,.dpb.unica{background:rgba(100,200,255,.2);color:#64c8ff}
+.rc.peca_swap.unica-tag{border-color:rgba(100,200,255,.5);background:rgba(100,200,255,.05)}
+.rc.peca_swap.unica-tag:hover{border-color:#64c8ff;background:rgba(100,200,255,.1)}
 .draft-footer{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   padding:16px 24px;background:rgba(255,255,255,.02);border-top:1px solid var(--border)}
 .draft-fp-emojis{font-size:1.6rem;letter-spacing:3px;flex-shrink:0}
@@ -551,6 +557,10 @@ const PECAS={
   asas_anjo:        {id:"asas_anjo",        slot:"asas",    nome:"Asas de Anjo",       emoji:"👼",raridade:"comum",   tipo:"luz",    stats:{hp:15,atk:0, def:5, spd:0 },descricao:"Proteção divina."},
   asas_dragao:      {id:"asas_dragao",      slot:"asas",    nome:"Asas de Dragão",     emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:0, atk:5, def:0, spd:8 },descricao:"Voam e cospem fogo."},
   asas_fenix:       {id:"asas_fenix",       slot:"asas",    nome:"Asas de Fênix",      emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:20,atk:0, def:0, spd:5 },descricao:"Ressuscita uma vez.",efeito:"ressurreicao"},
+  // ── Peças Únicas (só como recompensa de boss) ─────────────────────────────
+  olho_abismo:      {id:"olho_abismo",      slot:"membros", nome:"Olho do Abismo",     emoji:"💠",raridade:"unica",   tipo:"sombra", stats:{hp:0,  atk:10,def:0, spd:5 },descricao:"Ignora 50% da defesa inimiga.",              efeito:"ignora_def",          unica:true},
+  coroa_tita:       {id:"coroa_tita",       slot:"cabeca",  nome:"Coroa do Titã",      emoji:"👑",raridade:"unica",   tipo:null,     stats:{hp:60, atk:5, def:5, spd:0 },descricao:"Esmash massivo a cada 6 turnos (3× ATK).",   unica:true},
+  asas_tempestade:  {id:"asas_tempestade",  slot:"asas",    nome:"Asas da Tempestade", emoji:"⚡",raridade:"unica",   tipo:null,     stats:{hp:0,  atk:0, def:0, spd:30},descricao:"Esquiva automática no primeiro turno.",       efeito:"esquiva_primeiro",    unica:true},
 };
 const SLOTS=["cabeca","corpo","membros","asas"];
 const SLOT_L={cabeca:"🐲 Cabeça",corpo:"💀 Corpo",membros:"🦴 Membros",asas:"🦋 Asas"};
@@ -720,6 +730,7 @@ function batalhar(mA,mB){
         at.hab.prox+=at.hab.cd;
         if(at.hab.tipo==="sopro_fogo"){at.proxDobrado=true;log.push({t:"hab_ativa",tipo:"sopro_fogo",nome:at.nome})}
         else if(at.hab.tipo==="paralisar"){df.paralisia=true;log.push({t:"hab_ativa",tipo:"paralisar",nome:at.nome,alvo:df.nome})}
+        else if(at.hab.tipo==="esmagar"){at.proxEsmagar=true;log.push({t:"hab_ativa",tipo:"esmagar",nome:at.nome})}
       }
 
       // ── Boss: Uivo do Lobo (turno 3) ──
@@ -738,7 +749,16 @@ function batalhar(mA,mB){
       // ── Sopro de Fogo: dano dobrado ──
       if(at.proxDobrado){at.proxDobrado=false;d*=2;log.push({t:"sopro_fogo",nome:at.nome,d})}
 
-      // ── Esquiva ──
+      // ── Esmagar: 3× ATK ──
+      if(at.proxEsmagar){at.proxEsmagar=false;d=Math.floor(at.atk*3);log.push({t:"esmagar",nome:at.nome,d})}
+
+      // ── Ignora Defesa: usa 25% em vez de 50% ──
+      if(hasEf(at,"ignora_def")){const base=Math.max(1,atkEf-Math.floor(df.def*.25))+(Math.floor(Math.random()*5)-2);d=Math.max(1,base)}
+
+      // ── Esquiva automática (Asas Tempestade — primeiro turno) ──
+      if(df.esquivaPrimeiro){df.esquivaPrimeiro=false;log.push({t:"esquiva_primeiro",nome:df.nome});continue}
+
+      // ── Esquiva (trait Sombras) ──
       if(hasEf(df,"esquiva")&&Math.random()<.2){log.push({t:"esquiva",nome:df.nome});continue}
 
       // ── Armadura (Dragão Ancião): absorve primeiro hit ──
@@ -790,12 +810,15 @@ function mkC(m){
   return{nome:m.nome,id:m.id,hp:m.stats.hp,maxHp:m.stats.hp,atk:m.stats.atk,
     def:m.stats.def,spd:m.stats.spd,efeitos:[...(m.efeitos||[])],dots:[],
     ressuscitou:false,paralisia:false,atkBuff:null,uivouJa:false,
-    armaduraBroken:false,proxDobrado:false,danoRec:0,hab};
+    armaduraBroken:false,proxDobrado:false,proxEsmagar:false,
+    esquivaPrimeiro:hasEf({efeitos:m.efeitos||[]},"esquiva_primeiro"),
+    danoRec:0,hab};
 }
 function getHab(pecas){
   if(!pecas)return null;
   if(pecas.cabeca==="cabeca_dragao")return{tipo:"sopro_fogo",cd:4,prox:4};
   if(pecas.cabeca==="cabeca_cobra") return{tipo:"paralisar", cd:5,prox:5};
+  if(pecas.cabeca==="coroa_tita")   return{tipo:"esmagar",   cd:6,prox:6};
   return null;
 }
 function hasEf(c,ef){return c.efeitos.includes(ef)}
@@ -807,6 +830,7 @@ function adDot(c,d){const e=c.dots.find(x=>x.t===d.t);if(e)e.turns=Math.max(e.tu
 let RUN=null;
 function novaRun(nome){
   RUN={nome,rodada:0,monster:null,reliquias:[],bonusPendentes:[],
+    endless:false,rodadaMaxima:0,
     stats:{danoTotal:0,maiorDano:0,esquivas:0,batalhas:0,vitorias:0}};
 }
 
@@ -851,6 +875,12 @@ function rlGerarRecomp(rodada,monster){
   const rp=Object.values(PECAS).filter(p=>p.slot===sl&&(p.raridade==="rara"||p.raridade==="lendaria"));
   if(rp.length){const np=rp[Math.floor(Math.random()*rp.length)];pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,peca:np})}
   if(r>=2&&monster.reliquias.length<3){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:`${rl.nome} (${monster.reliquias.length+1}/3)`,desc:rl.desc,reliquia:rl})}}
+  // Peça Única — só em rounds de boss
+  if(r%3===0){
+    const unicas=Object.values(PECAS).filter(p=>p.unica&&!Object.values(monster.pecas).includes(p.id));
+    if(unicas.length){const u=unicas[Math.floor(Math.random()*unicas.length)];
+      pool.push({tipo:"peca_swap",slot:u.slot,emoji:u.emoji,label:`✨ ÚNICA: ${u.nome}`,desc:u.descricao,peca:u,unica:true})}
+  }
   return pool.sort(()=>Math.random()-.5).slice(0,3);
 }
 function rlAplicarRecomp(monster,r){
@@ -978,8 +1008,14 @@ function renderLogLine(e,nA,nB){
   else if(e.t==="paralisia"){l.className+=" le";  l.textContent=`🐍 ${e.nome} está paralisado — perde o turno!`}
   else if(e.t==="armadura") {l.className+=" l-boss";l.textContent=`🛡️ Armadura absorveu o golpe!`}
   else if(e.t==="sopro_fogo"){l.className+=" l-boss";l.textContent=`🔥 Sopro de Fogo! Dano dobrado: ${e.d}`}
-  else if(e.t==="hab_ativa"){l.className+=" l-hab";l.textContent=e.tipo==="sopro_fogo"?`🔥 ${e.nome} carrega o Sopro de Fogo!`:`🐍 ${e.nome} paralisa ${e.alvo}!`}
-  else if(e.t==="hab_info") {l.className+=" l-info";l.textContent=e.hab==="sopro_fogo"?`🔥 ${e.nome} usa Sopro de Fogo a cada 4 turnos`:`🐍 ${e.nome} usa Paralisar a cada 5 turnos`}
+  else if(e.t==="esmagar")       {l.className+=" l-boss";l.textContent=`👑 ${e.nome} ESMAGA! ${e.d} de dano!`}
+  else if(e.t==="esquiva_primeiro"){l.className+=" le";l.textContent=`⚡ ${e.nome} esquiva com as Asas da Tempestade!`}
+  else if(e.t==="hab_ativa"){l.className+=" l-hab";
+    const txt={sopro_fogo:`🔥 ${e.nome} carrega o Sopro de Fogo!`,paralisar:`🐍 ${e.nome} paralisa ${e.alvo}!`,esmagar:`👑 ${e.nome} prepara o ESMASH!`};
+    l.textContent=txt[e.tipo]||e.tipo}
+  else if(e.t==="hab_info") {l.className+=" l-info";
+    const txt={sopro_fogo:`🔥 ${e.nome} usa Sopro de Fogo a cada 4 turnos`,paralisar:`🐍 ${e.nome} usa Paralisar a cada 5 turnos`,esmagar:`👑 ${e.nome} usa Esmash a cada 6 turnos`};
+    l.textContent=txt[e.hab]||e.hab}
   else if(e.t==="boss_ability"){l.className+=" l-boss";l.textContent=e.msg}
   else if(e.t==="boss_info") {l.className+=" l-info";l.textContent=e.msg}
   else if(e.t==="alt_win")   {l.className+=" l-altwin";l.textContent=e.msg}
@@ -1180,7 +1216,9 @@ function rlPreCombate(){
   const isBoss=RUN.rodada%3===0;
   const zi=Math.min(Math.floor((RUN.rodada-1)/3),2);const zona=ZONAS[zi];
   el("pre-zona").textContent=`${zona.emoji} ${zona.nome}`;
-  el("pre-rod").innerHTML=`Rodada ${RUN.rodada} de 9`+(isBoss?` &nbsp;<span class="boss-av">👑 BOSS!</span>`:"");
+  const rodLabel=RUN.endless?`♾️ Endless — Rodada ${RUN.rodada}`:`Rodada ${RUN.rodada} de 9`;
+  el("pre-rod").innerHTML=rodLabel+(isBoss?` &nbsp;<span class="boss-av">👑 BOSS!</span>`:"");
+  RUN.rodadaMaxima=Math.max(RUN.rodadaMaxima,RUN.rodada);
   el("pre-meu").innerHTML=renderMVC(RUN.monster,rlCat);
   el("pre-ini").innerHTML=renderMVC(inimigoAtual,rlCat);
   el("pre-ini").className="mvc enemy"+(isBoss?" boss":"");
@@ -1204,11 +1242,33 @@ function rlPreCombate(){
 }
 
 function rlMostrarRecomp(recompensasRestantes){
-  if(RUN.rodada>=9){rlVitoria();return}
+  // Modo Endless: após rodada 9, ativa modo infinito
+  if(RUN.rodada>=9&&!RUN.endless){
+    RUN.endless=true;
+    mostrarBannerEndless(()=>_rlRecompImpl(recompensasRestantes));
+    return;
+  }
+  _rlRecompImpl(recompensasRestantes);
+}
+
+function mostrarBannerEndless(cb){
+  const ov=document.createElement("div");ov.className="combat-overlay";
+  ov.style.background="rgba(10,14,26,.92)";
+  ov.innerHTML=`
+    <div class="cb-text" style="color:var(--rare);text-shadow:0 0 40px rgba(168,85,247,.6);animation:bPulse .5s cubic-bezier(.175,.885,.32,1.275)">
+      ♾️<br>Modo Endless!
+    </div>
+    <div class="cb-sub">As rodadas continuam... até a morte.</div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{ov.classList.add("out");setTimeout(()=>{ov.remove();cb()},350)},2200);
+}
+
+function _rlRecompImpl(recompensasRestantes){
   // Ajuste 4: boss dá 2 recompensas
   const isBoss=RUN.rodada%3===0;
   if(recompensasRestantes===undefined)recompensasRestantes=isBoss?2:1;
-  const label=isBoss&&recompensasRestantes===2?`👑 Boss! Escolha 1 de 2 recompensas`:`Rodada ${RUN.rodada} de 9 concluída`;
+  const label=isBoss&&recompensasRestantes===2?`👑 Boss! Escolha 1 de 2 recompensas`
+    :RUN.endless?`♾️ Endless — Rodada ${RUN.rodada} concluída`:`Rodada ${RUN.rodada} de 9 concluída`;
   el("rc-info").textContent=label;
   const recomp=rlGerarRecomp(RUN.rodada,RUN.monster);
   const grid=el("rc-opcoes");grid.innerHTML="";
@@ -1380,7 +1440,10 @@ function htmlStats(m){
 }
 
 function rlGameOver(){
-  el("over-info").textContent=`Você chegou até a rodada ${RUN.rodada} de 9`;
+  const rodInfo=RUN.endless
+    ?`♾️ Endless: sobreviveu ${RUN.rodadaMaxima} rodadas (${RUN.rodadaMaxima-9} além da 9ª)`
+    :`Você chegou até a rodada ${RUN.rodada} de 9`;
+  el("over-info").textContent=rodInfo;
   el("over-monster").innerHTML=htmlStats(RUN.monster);
   mostrar("t-over");
 }
