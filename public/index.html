@@ -16,41 +16,33 @@
       <p class="subtitulo">Crie seu monstro. Domine a arena.</p>
       <input id="input-nome" type="text" placeholder="Seu nome" maxlength="20" />
       <div class="modo-btns">
-        <button id="btn-solo" class="btn-modo">🤖 Jogar Solo</button>
-        <button id="btn-multi" class="btn-modo btn-secundario">👥 Multijogador</button>
+        <button id="btn-roguelike" class="btn-modo btn-destaque">⚔️ Roguelike</button>
+        <button id="btn-solo"      class="btn-modo">🤖 Partida Rápida</button>
+        <button id="btn-multi"     class="btn-modo btn-secundario">👥 Multijogador</button>
       </div>
       <p id="msg-erro" class="erro hidden"></p>
     </div>
   </div>
 
-  <!-- TELA: Dificuldade (solo) -->
+  <!-- TELA: Dificuldade (solo rápido) -->
   <div id="tela-dificuldade" class="tela">
     <div class="card">
-      <h2>🎯 Escolha a Dificuldade</h2>
-      <p class="info" style="margin-bottom:20px">Quantos bots e quão fortes?</p>
+      <h2>🎯 Dificuldade</h2>
       <div class="dificuldade-opcoes">
         <button class="btn-dif" data-dif="facil">
-          <span class="dif-emoji">😌</span>
-          <span class="dif-nome">Fácil</span>
-          <span class="dif-desc">1 bot com peças simples</span>
+          <span class="dif-emoji">😌</span><div><span class="dif-nome">Fácil</span><span class="dif-desc">1 bot simples</span></div>
         </button>
         <button class="btn-dif" data-dif="medio">
-          <span class="dif-emoji">😤</span>
-          <span class="dif-nome">Médio</span>
-          <span class="dif-desc">2 bots equilibrados</span>
+          <span class="dif-emoji">😤</span><div><span class="dif-nome">Médio</span><span class="dif-desc">2 bots equilibrados</span></div>
         </button>
         <button class="btn-dif" data-dif="dificil">
-          <span class="dif-emoji">😈</span>
-          <span class="dif-nome">Difícil</span>
-          <span class="dif-desc">3 bots com combos ativos</span>
+          <span class="dif-emoji">😈</span><div><span class="dif-nome">Difícil</span><span class="dif-desc">3 bots com combos</span></div>
         </button>
         <button class="btn-dif" data-dif="aleatorio">
-          <span class="dif-emoji">🎲</span>
-          <span class="dif-nome">Aleatório</span>
-          <span class="dif-desc">Surpresa total</span>
+          <span class="dif-emoji">🎲</span><div><span class="dif-nome">Aleatório</span><span class="dif-desc">Surpresa!</span></div>
         </button>
       </div>
-      <button id="btn-voltar-entrada" class="btn-secundario" style="margin-top:16px">← Voltar</button>
+      <button id="btn-voltar-entrada" class="btn-secundario" style="margin-top:14px">← Voltar</button>
     </div>
   </div>
 
@@ -74,14 +66,13 @@
     </div>
   </div>
 
-  <!-- TELA: Criação -->
+  <!-- TELA: Criação (solo/multi) -->
   <div id="tela-criacao" class="tela">
     <div class="criacao-layout">
       <div class="criacao-header">
         <h2>🧪 Monte seu Monstro</h2>
         <div id="timer-criacao-box" class="timer-criacao">⏱ <span id="timer-num">60</span>s</div>
       </div>
-
       <div class="criacao-corpo">
         <div class="painel-pecas">
           <div class="nome-monster-row">
@@ -89,22 +80,117 @@
           </div>
           <div id="slots-container"></div>
         </div>
-
         <div class="painel-preview">
-          <div class="monster-card" id="preview-card">
+          <div class="monster-card">
             <div class="monster-emoji-area" id="preview-emojis">❓❓❓</div>
-            <div class="monster-nome" id="preview-nome">?????</div>
+            <div class="monster-nome"       id="preview-nome">?????</div>
             <div class="monster-stats">
-              <div class="stat"><span class="stat-label">❤️ Vida</span><span id="stat-hp">—</span></div>
-              <div class="stat"><span class="stat-label">⚔️ Ataque</span><span id="stat-atk">—</span></div>
-              <div class="stat"><span class="stat-label">🛡️ Defesa</span><span id="stat-def">—</span></div>
+              <div class="stat"><span class="stat-label">❤️ Vida</span>      <span id="stat-hp">—</span></div>
+              <div class="stat"><span class="stat-label">⚔️ Ataque</span>    <span id="stat-atk">—</span></div>
+              <div class="stat"><span class="stat-label">🛡️ Defesa</span>    <span id="stat-def">—</span></div>
               <div class="stat"><span class="stat-label">⚡ Velocidade</span><span id="stat-spd">—</span></div>
             </div>
             <div id="preview-combos" class="combo-list"></div>
           </div>
-          <button id="btn-confirmar" disabled>✅ Batalhar!</button>
+          <button id="btn-confirmar" disabled>✅ Confirmar</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- TELA: Roguelike — Draft inicial -->
+  <div id="tela-rl-draft" class="tela">
+    <div class="criacao-layout">
+      <div class="criacao-header">
+        <h2>⚔️ Escolha suas Peças Iniciais</h2>
+        <div class="rl-badge">Rodada 1 de 9</div>
+      </div>
+      <div class="criacao-corpo">
+        <div class="painel-pecas">
+          <div class="nome-monster-row">
+            <input id="rl-input-nome" type="text" placeholder="Nome do seu monstro" maxlength="25" />
+          </div>
+          <div id="rl-slots-container"></div>
+        </div>
+        <div class="painel-preview">
+          <div class="monster-card">
+            <div class="monster-emoji-area" id="rl-preview-emojis">❓❓❓</div>
+            <div class="monster-nome"       id="rl-preview-nome">?????</div>
+            <div class="monster-stats">
+              <div class="stat"><span class="stat-label">❤️ Vida</span>      <span id="rl-stat-hp">—</span></div>
+              <div class="stat"><span class="stat-label">⚔️ Ataque</span>    <span id="rl-stat-atk">—</span></div>
+              <div class="stat"><span class="stat-label">🛡️ Defesa</span>    <span id="rl-stat-def">—</span></div>
+              <div class="stat"><span class="stat-label">⚡ Velocidade</span><span id="rl-stat-spd">—</span></div>
+            </div>
+          </div>
+          <button id="rl-btn-confirmar" disabled>⚔️ Iniciar Run!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA: Roguelike — Pré-combate -->
+  <div id="tela-rl-pre-combate" class="tela">
+    <div class="card wide">
+      <div class="rl-zona-header" id="rl-zona-header"></div>
+      <div class="rl-rodada-info" id="rl-rodada-info"></div>
+      <div class="vs-pre">
+        <div class="monster-vs-card" id="rl-pre-meu"></div>
+        <div class="vs-sep">VS</div>
+        <div class="monster-vs-card enemy" id="rl-pre-inimigo"></div>
+      </div>
+      <p class="info" style="margin-top:16px">Batalha começando em instantes...</p>
+    </div>
+  </div>
+
+  <!-- TELA: Combate (reusada) -->
+  <div id="tela-combate" class="tela">
+    <div class="card wide">
+      <h2>🏟️ Arena</h2>
+      <div class="vs-header">
+        <span id="nome-fighter-a" class="fighter-nome"></span>
+        <span class="vs-label">VS</span>
+        <span id="nome-fighter-b" class="fighter-nome"></span>
+      </div>
+      <div class="hp-bars">
+        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-bar-a"></div></div>
+        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-bar-b"></div></div>
+      </div>
+      <div id="log-combate"></div>
+      <div class="progresso-torneio">
+        Batalha <span id="batalha-atual">1</span> de <span id="batalha-total">1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA: Roguelike — Recompensa -->
+  <div id="tela-rl-recompensa" class="tela">
+    <div class="card">
+      <div class="rl-vitoria-banner">✅ Vitória!</div>
+      <h2>🎁 Escolha sua Recompensa</h2>
+      <p class="info" id="rl-recompensa-rodada"></p>
+      <div id="rl-recompensa-opcoes" class="recompensa-grid"></div>
+    </div>
+  </div>
+
+  <!-- TELA: Roguelike — Game Over -->
+  <div id="tela-rl-gameover" class="tela">
+    <div class="card">
+      <div class="rl-gameover-banner">💀 Derrotado!</div>
+      <h2>Fim de Run</h2>
+      <p id="rl-gameover-rodada" class="info"></p>
+      <div id="rl-gameover-monster" class="monster-card" style="margin:20px auto;max-width:260px;text-align:center"></div>
+      <button id="rl-btn-nova-run">🔄 Nova Run</button>
+    </div>
+  </div>
+
+  <!-- TELA: Roguelike — Vitória final -->
+  <div id="tela-rl-vitoria" class="tela">
+    <div class="card">
+      <div class="rl-vitoria-final">🏆 LENDÁRIO!</div>
+      <h2>Você sobreviveu às 9 rodadas!</h2>
+      <div id="rl-vitoria-monster" class="monster-card" style="margin:20px auto;max-width:260px;text-align:center"></div>
+      <button id="rl-btn-nova-run-v">🔄 Nova Run</button>
     </div>
   </div>
 
@@ -116,31 +202,7 @@
     </div>
   </div>
 
-  <!-- TELA: Combate -->
-  <div id="tela-combate" class="tela">
-    <div class="card wide">
-      <h2>🏟️ Arena</h2>
-      <div class="vs-header">
-        <span id="nome-fighter-a" class="fighter-nome"></span>
-        <span class="vs-label">VS</span>
-        <span id="nome-fighter-b" class="fighter-nome"></span>
-      </div>
-      <div class="hp-bars">
-        <div class="hp-bar-wrap">
-          <div class="hp-fill" id="hp-bar-a"></div>
-        </div>
-        <div class="hp-bar-wrap">
-          <div class="hp-fill" id="hp-bar-b"></div>
-        </div>
-      </div>
-      <div id="log-combate"></div>
-      <div class="progresso-torneio">
-        Batalha <span id="batalha-atual">1</span> de <span id="batalha-total">1</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- TELA: Resultado -->
+  <!-- TELA: Resultado (multi/solo rápido) -->
   <div id="tela-resultado" class="tela">
     <div class="card">
       <h2>🏆 Resultado Final</h2>

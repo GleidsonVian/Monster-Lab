@@ -319,6 +319,102 @@ button:disabled { background: #1e2d40; color: var(--muted); cursor: not-allowed;
 /* ── Utils ──────────────────────────────────────────── */
 .hidden { display: none !important; }
 
+/* ── Roguelike ──────────────────────────────────────── */
+.btn-destaque {
+  background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+  color: #fff !important;
+}
+.btn-destaque:hover { background: linear-gradient(135deg, #6d28d9, #9333ea) !important; }
+
+.rl-badge {
+  font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--rare); background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.3);
+  padding: 5px 14px; border-radius: 99px;
+}
+
+.rl-zona-header {
+  font-size: 1.3rem; font-weight: 700;
+  margin-bottom: 6px; color: var(--accent2);
+}
+.rl-rodada-info {
+  font-size: 0.85rem; color: var(--muted); margin-bottom: 20px;
+}
+.rl-rodada-info .boss-aviso {
+  color: var(--danger); font-weight: 700;
+}
+
+/* Pre-combat VS */
+.vs-pre {
+  display: flex; align-items: center; justify-content: center; gap: 20px;
+  flex-wrap: wrap;
+}
+.monster-vs-card {
+  flex: 1; min-width: 180px; max-width: 220px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 14px; text-align: center;
+}
+.monster-vs-card.enemy { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }
+.monster-vs-card.boss  { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+.monster-vs-card .mvc-emoji  { font-size: 2.2rem; margin-bottom: 8px; }
+.monster-vs-card .mvc-nome   { font-weight: 700; color: var(--accent2); margin-bottom: 10px; font-size: 0.95rem; }
+.monster-vs-card .mvc-stats  { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.vs-sep { font-size: 2rem; font-weight: 900; color: var(--danger); flex-shrink: 0; }
+
+/* Recompensa */
+.recompensa-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.recompensa-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 12px; cursor: pointer;
+  border: 2px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  transition: all 0.15s; text-align: left;
+}
+.recompensa-card:hover { border-color: var(--accent); background: rgba(34,197,94,0.07); }
+.recompensa-card.reliquia { border-color: rgba(245,158,11,0.35); }
+.recompensa-card.reliquia:hover { border-color: var(--legendary); background: rgba(245,158,11,0.08); }
+.recompensa-card.peca_swap { border-color: rgba(168,85,247,0.35); }
+.recompensa-card.peca_swap:hover { border-color: var(--rare); background: rgba(168,85,247,0.08); }
+.recompensa-emoji { font-size: 2rem; flex-shrink: 0; }
+.recompensa-info  { flex: 1; }
+.recompensa-label { font-weight: 700; font-size: 0.95rem; }
+.recompensa-desc  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+/* HUD de run (progresso) */
+.rl-progresso {
+  display: flex; gap: 6px; justify-content: center; margin-bottom: 14px;
+}
+.rl-dot {
+  width: 28px; height: 6px; border-radius: 99px;
+  background: var(--border); transition: background 0.3s;
+}
+.rl-dot.feito   { background: var(--accent); }
+.rl-dot.atual   { background: var(--accent2); }
+.rl-dot.boss    { background: var(--danger); }
+
+/* Game over / Vitória banners */
+.rl-gameover-banner {
+  font-size: 2.5rem; margin-bottom: 8px;
+  text-shadow: 0 0 20px rgba(239,68,68,0.5);
+}
+.rl-vitoria-banner {
+  font-size: 1.5rem; color: var(--accent);
+  margin-bottom: 8px; font-weight: 700;
+}
+.rl-vitoria-final {
+  font-size: 2.5rem; font-weight: 900; color: var(--legendary);
+  margin-bottom: 8px; text-shadow: 0 0 20px rgba(245,158,11,0.5);
+}
+
+/* Relíquias no monster card */
+.reliquia-lista { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; justify-content: center; }
+.reliquia-pip {
+  font-size: 1.1rem; padding: 3px 6px;
+  background: rgba(245,158,11,0.1); border-radius: 6px;
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
 /* ── Bot badges ─────────────────────────────────────── */
 .badge-bot {
   font-size: 0.7rem; padding: 2px 7px; border-radius: 99px;
