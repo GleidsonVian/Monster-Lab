@@ -307,6 +307,29 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
   background:rgba(34,197,94,.1);border-radius:7px}
 
 @keyframes si{from{transform:translateX(-5px);opacity:0}to{transform:translateX(0);opacity:1}}
+/* HUD de progresso */
+.rl-hud{position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;justify-content:center;align-items:center;
+  padding:7px 20px;background:rgba(10,14,26,.88);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.rl-hud.hidden{display:none}
+.rl-hud-inner{display:flex;align-items:center;gap:0;max-width:540px;width:100%}
+.hud-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0;
+  transition:all .3s;border:2px solid transparent}
+.hud-dot.pendente{background:rgba(255,255,255,.05);color:var(--muted);border-color:var(--border)}
+.hud-dot.feito   {background:var(--accent);color:#0a0e1a;border-color:var(--accent)}
+.hud-dot.atual   {background:var(--accent2);color:#0a0e1a;border-color:var(--accent2);
+  box-shadow:0 0 12px rgba(245,158,11,.5);animation:hudPulse 1.2s ease-in-out infinite}
+.hud-dot.boss-p  {width:30px;height:30px;font-size:.8rem;background:rgba(239,68,68,.1);color:var(--muted);border-color:rgba(239,68,68,.3)}
+.hud-dot.boss-f  {width:30px;height:30px;font-size:.8rem;background:var(--danger);color:#fff;border-color:var(--danger)}
+.hud-dot.boss-a  {width:30px;height:30px;font-size:.8rem;background:var(--danger);color:#fff;border-color:var(--danger);
+  box-shadow:0 0 14px rgba(239,68,68,.6);animation:hudPulse 1s ease-in-out infinite}
+.hud-dot.endless {width:30px;height:30px;font-size:.8rem;background:rgba(168,85,247,.2);color:var(--rare);border-color:var(--rare)}
+.hud-linha{flex:1;height:2px;background:var(--border);transition:background .3s;min-width:8px}
+.hud-linha.feita {background:var(--accent)}
+.hud-info{font-size:.65rem;color:var(--muted);margin-left:14px;white-space:nowrap;flex-shrink:0}
+@keyframes hudPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 @media(max-width:680px){.cl-body{flex-direction:column}.p-prev{width:100%;border-top:1px solid var(--border)}.p-pecas{max-height:50vh}}
@@ -834,6 +857,35 @@ function novaRun(nome){
     stats:{danoTotal:0,maiorDano:0,esquivas:0,batalhas:0,vitorias:0}};
 }
 
+function gerarNomeInimigo(ids,zonaIdx){
+  const tipos=ids.map(id=>PECAS[id]?.tipo).filter(Boolean);
+  const unico=t=>tipos.filter(x=>x===t).length;
+  // Prefixos por tipo dominante
+  const prefixoTipo={
+    fogo:["Flamejante","Incandescente","Ardente","Ígnea"],
+    veneno:["Venenosa","Pestilenta","Tóxica","Pútrida"],
+    sombra:["Sombria","Trevas","Obscura","Maldita"],
+    luz:["Sagrada","Radiante","Bendita","Celestial"],
+  };
+  // Base por zona
+  const baseZona=[
+    ["Chimera","Basilisco","Wyvern","Gargoyle","Wendigo"],
+    ["Hidra","Manticora","Víbora","Pantânico","Lampreante"],
+    ["Dragão","Golem","Titã","Salamandra","Leviatã"],
+  ];
+  const base=baseZona[zonaIdx][Math.floor(Math.random()*5)];
+  // Encontra tipo dominante
+  let dominante=null;let max=0;
+  for(const t of["fogo","veneno","sombra","luz"]){if(unico(t)>max){max=unico(t);dominante=t}}
+  if(dominante&&max>=1){
+    const pfx=prefixoTipo[dominante];
+    return pfx[Math.floor(Math.random()*pfx.length)]+" "+base;
+  }
+  // Sem tipo dominante: adjetivo genérico por zona
+  const adj=[["Selvagem","Raivoso","Feroz"],["Corrupto","Funesto","Maldito"],["Ancião","Colossal","Primordial"]];
+  const a=adj[zonaIdx];return a[Math.floor(Math.random()*a.length)]+" "+base;
+}
+
 function rlGerarInimigo(rodada){
   const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
   // Ajuste 1: escala reduzida de 13% → 8% por rodada
@@ -844,9 +896,8 @@ function rlGerarInimigo(rodada){
   let bossRef=null;
   if(isBoss){bossRef=BOSSES[Math.floor(rodada/3)-1];nome=bossRef.nome+"  👑";ids=bossRef.pecas}
   else{
-    const ns=["Chimera","Basilisco","Wyvern","Golem","Manticora","Gargoyle","Wendigo"];
-    nome=ns[Math.floor(Math.random()*ns.length)];
-    ids=SLOTS.map(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&ZONAS[zi].rar.includes(p.raridade));return pool[Math.floor(Math.random()*pool.length)].id});
+    ids=SLOTS.map(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&ZONAS[zi].rar.includes(p.raridade)&&!p.unica);return pool[Math.floor(Math.random()*pool.length)].id});
+    nome=gerarNomeInimigo(ids,zi);
   }
   const{stats,efeitos}=calcStats(ids);const combos=verifCombos(ids);
   combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
@@ -902,7 +953,44 @@ function rlAplicarRecomp(monster,r){
 //  UI HELPERS
 // ═══════════════════════════════════════════════
 const el=id=>document.getElementById(id);
-function mostrar(id){document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));el(id).classList.add("ativa")}
+
+const RL_TELAS_HUD=new Set(["t-draft","t-pre","t-combate","t-recomp","t-evento","t-mutacao"]);
+
+function mostrar(id){
+  document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));
+  el(id).classList.add("ativa");
+  const hud=el("rl-hud");
+  if(hud){
+    if(RUN&&RL_TELAS_HUD.has(id)){hud.classList.remove("hidden");atualizarHUD()}
+    else hud.classList.add("hidden");
+  }
+}
+
+function atualizarHUD(){
+  const inner=el("rl-hud-inner");if(!inner||!RUN)return;
+  inner.innerHTML="";
+  const atual=RUN.rodada;
+  const total=9;
+  for(let i=1;i<=total;i++){
+    const isBoss=i%3===0;
+    const feito=i<atual;
+    const isAtual=i===atual;
+    // Linha antes
+    if(i>1){const l=document.createElement("div");l.className="hud-linha"+(feito||isAtual?" feita":"");inner.appendChild(l)}
+    const dot=document.createElement("div");
+    if(isBoss){dot.className=feito?"hud-dot boss-f":isAtual?"hud-dot boss-a":"hud-dot boss-p";dot.textContent="👑"}
+    else{dot.className=feito?"hud-dot feito":isAtual?"hud-dot atual":"hud-dot pendente";dot.textContent=i}
+    dot.title=isBoss?`Rodada ${i} — BOSS`:`Rodada ${i}`;
+    inner.appendChild(dot);
+  }
+  // Endless
+  if(RUN.endless){
+    const l=document.createElement("div");l.className="hud-linha feita";inner.appendChild(l);
+    const dot=document.createElement("div");dot.className="hud-dot endless";dot.textContent="♾️";dot.title="Modo Endless";inner.appendChild(dot);
+    const info=document.createElement("div");info.className="hud-info";info.textContent=`R${atual}`;inner.appendChild(info);
+  }
+}
+
 function mostrarErro(msg){el("msg-erro").textContent=msg;el("msg-erro").style.display="block"}
 
 function renderSlots(containerId,selObj,cat,onChange){
@@ -1602,5 +1690,9 @@ function modoOffline(){
   document.querySelectorAll(".btn-online").forEach(b=>b.style.display="none");
 }
 </script>
+<!-- HUD de progresso da run -->
+<div id="rl-hud" class="rl-hud hidden">
+  <div id="rl-hud-inner" class="rl-hud-inner"></div>
+</div>
 </body>
 </html>
