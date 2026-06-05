@@ -4,6 +4,9 @@ const socket = io();
 let catalogo = null;
 let selecoes = { cabeca: null, corpo: null, membros: null, asas: "asas_nenhuma" };
 let hpMaximos = { a: 1, b: 1 };
+let modoAtual = null;       // "solo" | "multi"
+let dificuldadeSolo = null;
+let nomeJogador = "";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const el = (id) => document.getElementById(id);
@@ -13,27 +16,58 @@ function mostrarTela(id) {
   el(id).classList.add("ativa");
 }
 
-// ── Entrada ──────────────────────────────────────────────────────────────────
-el("btn-entrar").addEventListener("click", () => {
-  const nome = el("input-nome").value.trim();
-  const sala = el("input-sala").value.trim();
-  if (!nome || !sala) { mostrarErro("Preencha nome e código da sala."); return; }
-  socket.emit("entrar_sala", { nome, sala });
-});
-el("input-sala").addEventListener("keydown", (e) => { if (e.key === "Enter") el("btn-entrar").click(); });
-
 function mostrarErro(msg) {
   const p = el("msg-erro");
   p.textContent = msg;
   p.classList.remove("hidden");
 }
 
-// ── Lobby ─────────────────────────────────────────────────────────────────
-socket.on("entrou_sala", ({ sala }) => {
-  el("nome-sala").textContent = sala;
-  mostrarTela("tela-lobby");
+// ── Tela de Entrada ──────────────────────────────────────────────────────────
+el("btn-solo").addEventListener("click", () => {
+  nomeJogador = el("input-nome").value.trim();
+  if (!nomeJogador) { mostrarErro("Digite seu nome primeiro."); return; }
+  modoAtual = "solo";
+  mostrarTela("tela-dificuldade");
 });
 
+el("btn-multi").addEventListener("click", () => {
+  nomeJogador = el("input-nome").value.trim();
+  if (!nomeJogador) { mostrarErro("Digite seu nome primeiro."); return; }
+  modoAtual = "multi";
+  mostrarTela("tela-multi");
+});
+
+// ── Tela de Dificuldade ───────────────────────────────────────────────────────
+document.querySelectorAll(".btn-dif").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    dificuldadeSolo = btn.dataset.dif;
+    // Entra numa sala solo privada (nome do socket como sala)
+    socket.emit("entrar_sala", { nome: nomeJogador, sala: "SOLO_" + Date.now() });
+  });
+});
+
+el("btn-voltar-entrada").addEventListener("click", () => mostrarTela("tela-entrada"));
+
+// ── Tela Multijogador ─────────────────────────────────────────────────────────
+el("btn-entrar-sala").addEventListener("click", () => {
+  const sala = el("input-sala").value.trim();
+  if (!sala) return;
+  socket.emit("entrar_sala", { nome: nomeJogador, sala });
+});
+el("btn-voltar-modo").addEventListener("click", () => mostrarTela("tela-entrada"));
+
+// ── Resposta ao entrar na sala ─────────────────────────────────────────────
+socket.on("entrou_sala", ({ sala }) => {
+  if (modoAtual === "solo") {
+    // Vai direto pra criação sem lobby
+    socket.emit("pedir_catalogo");
+  } else {
+    el("nome-sala").textContent = sala;
+    mostrarTela("tela-lobby");
+  }
+});
+
+// ── Lobby ─────────────────────────────────────────────────────────────────
 socket.on("sala_atualizada", ({ jogadores, min }) => {
   const ul = el("lista-lobby");
   ul.innerHTML = "";
@@ -61,8 +95,23 @@ socket.on("fase_criacao", ({ duracao, catalogo: cat }) => {
   selecoes = { cabeca: null, corpo: null, membros: null, asas: "asas_nenhuma" };
   renderizarCatalogo();
   atualizarPreview();
+
+  // No modo solo não mostra timer (sem pressão)
+  if (modoAtual === "solo") {
+    el("timer-criacao-box").style.display = "none";
+    el("btn-confirmar").textContent = "⚔️ Batalhar!";
+  } else {
+    el("timer-criacao-box").style.display = "";
+    el("btn-confirmar").textContent = "✅ Confirmar Monstro";
+    iniciarTimerCriacao(duracao);
+  }
+
   mostrarTela("tela-criacao");
-  iniciarTimerCriacao(duracao);
+});
+
+socket.on("timer_criacao", ({ restante }) => {
+  el("timer-num").textContent = restante;
+  if (restante <= 10) el("timer-criacao-box").classList.add("urgente");
 });
 
 function iniciarTimerCriacao(total) {
@@ -71,15 +120,10 @@ function iniciarTimerCriacao(total) {
   const iv = setInterval(() => {
     restante--;
     el("timer-num").textContent = restante;
-    if (restante <= 10) el("timer-criacao").classList.add("urgente");
+    if (restante <= 10) el("timer-criacao-box").classList.add("urgente");
     if (restante <= 0) clearInterval(iv);
   }, 1000);
 }
-
-socket.on("timer_criacao", ({ restante }) => {
-  el("timer-num").textContent = restante;
-  if (restante <= 10) el("timer-criacao").classList.add("urgente");
-});
 
 const SLOT_LABELS = {
   cabeca: "🐲 Cabeça",
@@ -116,11 +160,9 @@ function renderizarCatalogo() {
       `;
       btn.title = `${peca.descricao}\n❤️+${peca.stats.hp} ⚔️+${peca.stats.atk} 🛡️+${peca.stats.def} ⚡+${peca.stats.spd}`;
 
-      // Pré-seleciona "Sem Asas"
       if (peca.id === "asas_nenhuma") btn.classList.add("selecionada");
 
       btn.addEventListener("click", () => {
-        // Desseleciona botões do mesmo slot
         container.querySelectorAll(`.peca-btn[data-slot="${slot}"]`).forEach((b) => b.classList.remove("selecionada"));
         btn.classList.add("selecionada");
         selecoes[slot] = peca.id;
@@ -136,26 +178,17 @@ function renderizarCatalogo() {
 }
 
 function atualizarPreview() {
-  const pecaIds = Object.values(selecoes).filter(Boolean);
-
-  // Emojis
   const emojis = ["cabeca", "corpo", "membros", "asas"].map((slot) => {
     if (!selecoes[slot] || selecoes[slot] === "asas_nenhuma") return "";
-    const lista = catalogo[slot];
-    const peca = lista?.find((p) => p.id === selecoes[slot]);
+    const peca = catalogo[slot]?.find((p) => p.id === selecoes[slot]);
     return peca ? peca.emoji : "";
   }).filter(Boolean).join(" ");
   el("preview-emojis").textContent = emojis || "❓";
 
-  // Nome
-  const nomeInput = el("input-nome-monster").value.trim();
-  el("preview-nome").textContent = nomeInput || "Monstro Sem Nome";
+  el("preview-nome").textContent = el("input-nome-monster").value.trim() || "Monstro Sem Nome";
 
-  // Stats (simulado no cliente com dados do catálogo)
   const stats = { hp: 50, atk: 0, def: 0, spd: 0 };
-  const combosLocais = [];
-
-  pecaIds.forEach((id) => {
+  Object.values(selecoes).filter(Boolean).forEach((id) => {
     for (const slot of Object.keys(catalogo)) {
       const peca = catalogo[slot]?.find((p) => p.id === id);
       if (peca) {
@@ -173,9 +206,7 @@ function atualizarPreview() {
   el("stat-def").textContent = Math.max(0,  stats.def);
   el("stat-spd").textContent = Math.max(1,  stats.spd);
 
-  // Habilitar confirmar se slots obrigatórios preenchidos
-  const ok = selecoes.cabeca && selecoes.corpo && selecoes.membros;
-  el("btn-confirmar").disabled = !ok;
+  el("btn-confirmar").disabled = !(selecoes.cabeca && selecoes.corpo && selecoes.membros);
 }
 
 el("input-nome-monster").addEventListener("input", atualizarPreview);
@@ -183,13 +214,19 @@ el("input-nome-monster").addEventListener("input", atualizarPreview);
 el("btn-confirmar").addEventListener("click", () => {
   const nome = el("input-nome-monster").value.trim() || "Monstro";
   const pecas = Object.values(selecoes).filter(Boolean);
-  socket.emit("submeter_monster", { nome, pecas });
-  el("btn-confirmar").disabled = true;
-  el("btn-confirmar").textContent = "✅ Confirmado! Aguardando os outros...";
+
+  if (modoAtual === "solo") {
+    socket.emit("iniciar_solo", { dificuldade: dificuldadeSolo, nome, pecas });
+    el("btn-confirmar").disabled = true;
+    el("btn-confirmar").textContent = "⚔️ Entrando na Arena...";
+  } else {
+    socket.emit("submeter_monster", { nome, pecas });
+    el("btn-confirmar").disabled = true;
+    el("btn-confirmar").textContent = "✅ Confirmado! Aguardando os outros...";
+  }
 });
 
 socket.on("monster_confirmado", ({ monster }) => {
-  // Exibe combos ativados no preview
   const div = el("preview-combos");
   div.innerHTML = "";
   monster.combos.forEach((c) => {
@@ -209,6 +246,7 @@ socket.on("fase_revelacao", ({ monstros }) => {
     const card = document.createElement("div");
     card.className = "monster-reveal-card";
     card.style.animationDelay = `${i * 0.15}s`;
+    if (m.isBot) card.classList.add("bot-card");
 
     const emojis = Object.values(m.pecas)
       .filter((id) => id && id !== "asas_nenhuma")
@@ -218,9 +256,11 @@ socket.on("fase_revelacao", ({ monstros }) => {
       `<div class="combo-tag"><strong>${c.emoji} ${c.nome}</strong></div>`
     ).join("");
 
+    const labelBot = m.isBot ? `<span class="badge-bot">🤖 BOT</span>` : "";
+
     card.innerHTML = `
       <div class="big-emoji">${emojis || "👾"}</div>
-      <div class="rev-nome">${m.nome}</div>
+      <div class="rev-nome">${m.nome} ${labelBot}</div>
       <div class="rev-jogador">por ${m.jogadorNome}</div>
       <div class="rev-stats">
         <span class="stat-pill">❤️ ${m.stats.hp}</span>
@@ -244,7 +284,7 @@ socket.on("fase_combate", ({ totalConfrontos }) => {
   mostrarTela("tela-combate");
 });
 
-socket.on("resultado_batalha", ({ confrontoAtual, total, nomeA, nomeB, log, vencedor }) => {
+socket.on("resultado_batalha", ({ confrontoAtual, total, nomeA, nomeB, log }) => {
   el("batalha-atual").textContent = confrontoAtual;
   el("batalha-total").textContent = total;
   el("nome-fighter-a").textContent = nomeA;
@@ -253,7 +293,6 @@ socket.on("resultado_batalha", ({ confrontoAtual, total, nomeA, nomeB, log, venc
   const logDiv = el("log-combate");
   logDiv.innerHTML = "";
 
-  // Pega HP máximos do evento de stats
   const statsEvt = log.find((l) => l.tipo === "stats");
   hpMaximos.a = statsEvt?.a?.hp || 1;
   hpMaximos.b = statsEvt?.b?.hp || 1;
@@ -263,7 +302,6 @@ socket.on("resultado_batalha", ({ confrontoAtual, total, nomeA, nomeB, log, venc
   el("hp-bar-a").classList.remove("baixo");
   el("hp-bar-b").classList.remove("baixo");
 
-  // Anima o log linha por linha
   let delay = 0;
   log.forEach((entrada) => {
     delay += velocidadeLog(entrada);
@@ -271,9 +309,9 @@ socket.on("resultado_batalha", ({ confrontoAtual, total, nomeA, nomeB, log, venc
   });
 });
 
-function velocidadeLog(entrada) {
-  if (entrada.tipo === "turno") return 200;
-  if (entrada.tipo === "inicio" || entrada.tipo === "fim") return 400;
+function velocidadeLog(e) {
+  if (e.tipo === "turno")  return 200;
+  if (e.tipo === "inicio" || e.tipo === "fim") return 400;
   return 120;
 }
 
@@ -321,7 +359,7 @@ function renderizarLogEntrada(entrada, nomeA, nomeB) {
       linha.className += " log-efeito";
       linha.textContent = `🔥 ${entrada.nome} renasce das chamas! (${entrada.hp} HP)`;
       break;
-    case "morte":
+      case "morte":
       linha.className += " log-morte";
       linha.textContent = `💀 ${entrada.nome} foi derrotado!`;
       break;
@@ -334,7 +372,7 @@ function renderizarLogEntrada(entrada, nomeA, nomeB) {
       linha.textContent = entrada.texto;
       break;
     default:
-      linha.textContent = JSON.stringify(entrada);
+      return;
   }
 
   div.appendChild(linha);
@@ -343,7 +381,7 @@ function renderizarLogEntrada(entrada, nomeA, nomeB) {
 
 function atualizarBarra(nome, hpAtual, nomeA, nomeB) {
   let fill, maxHp;
-  if (nome === nomeA) { fill = el("hp-bar-a"); maxHp = hpMaximos.a; }
+  if (nome === nomeA)      { fill = el("hp-bar-a"); maxHp = hpMaximos.a; }
   else if (nome === nomeB) { fill = el("hp-bar-b"); maxHp = hpMaximos.b; }
   else return;
 
@@ -362,12 +400,13 @@ socket.on("resultado_final", ({ ranking }) => {
 
   ranking.forEach((item, i) => {
     const row = document.createElement("div");
-    row.className = "rank-item";
+    row.className = "rank-item" + (item.isBot ? " rank-bot" : "");
+    const botLabel = item.isBot ? ` <span class="badge-bot">🤖</span>` : "";
     row.innerHTML = `
       <div class="rank-pos">${medalhas[i] || `${i + 1}º`}</div>
       <div class="rank-info">
-        <div class="rank-nome">${item.monster.nome}</div>
-        <div class="rank-jogador">por ${item.nome}</div>
+        <div class="rank-nome">${item.monster.nome}${botLabel}</div>
+        <div class="rank-jogador">${item.isBot ? "🤖 Bot" : `👤 ${item.nome}`}</div>
       </div>
       <div class="rank-wins">${item.vitorias}W</div>
     `;

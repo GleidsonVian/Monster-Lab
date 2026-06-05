@@ -77,6 +77,32 @@ button:hover { background: #16a34a; }
 button:active { transform: scale(0.98); }
 button:disabled { background: #1e2d40; color: var(--muted); cursor: not-allowed; }
 
+/* ── Modo btns ──────────────────────────────────────── */
+.modo-btns { display: flex; gap: 10px; margin-top: 12px; }
+.modo-btns button { margin: 0; }
+.btn-secundario {
+  background: rgba(255,255,255,0.06) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+.btn-secundario:hover { background: rgba(255,255,255,0.1) !important; }
+
+/* ── Dificuldade ────────────────────────────────────── */
+.dificuldade-opcoes { display: flex; flex-direction: column; gap: 10px; }
+.btn-dif {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; text-align: left;
+  background: rgba(255,255,255,0.03);
+  border: 2px solid var(--border); border-radius: 12px;
+  color: var(--text); cursor: pointer;
+  transition: all 0.15s; width: 100%; margin: 0;
+  font-weight: 400;
+}
+.btn-dif:hover { border-color: var(--accent); background: rgba(34,197,94,0.07); }
+.dif-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.dif-nome { font-weight: 700; font-size: 1rem; display: block; }
+.dif-desc { font-size: 0.8rem; color: var(--muted); display: block; }
+
 /* ── Lobby ──────────────────────────────────────────── */
 #lista-lobby { list-style: none; margin: 16px 0; text-align: left; }
 #lista-lobby li {
@@ -292,6 +318,15 @@ button:disabled { background: #1e2d40; color: var(--muted); cursor: not-allowed;
 
 /* ── Utils ──────────────────────────────────────────── */
 .hidden { display: none !important; }
+
+/* ── Bot badges ─────────────────────────────────────── */
+.badge-bot {
+  font-size: 0.7rem; padding: 2px 7px; border-radius: 99px;
+  background: rgba(100,116,139,0.2); color: var(--muted);
+  vertical-align: middle;
+}
+.bot-card { opacity: 0.85; border-color: rgba(100,116,139,0.3) !important; }
+.rank-bot { opacity: 0.75; }
 
 /* ── Scrollbar ──────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }

@@ -1,6 +1,7 @@
 const { PECAS, SLOTS, calcularStats } = require("./pieces");
 const { verificarCombos } = require("./combos");
 const { batalhar, gerarConfrontos } = require("./CombatEngine");
+const { gerarBots } = require("./BotGenerator");
 
 const FASE = {
   LOBBY: "lobby",
@@ -204,19 +205,93 @@ class GameManager {
     setTimeout(() => this._executarConfrontos(confrontos, index + 1), 3000);
   }
 
+  // ── Modo Solo ──────────────────────────────────────────────────────────────
+
+  iniciarSolo(socketId, { dificuldade, nome, pecas }) {
+    const jogador = this.jogadores[socketId];
+    if (!jogador) return;
+
+    // Monta o monster do jogador
+    const slots = { cabeca: null, corpo: null, membros: null, asas: "asas_nenhuma" };
+    for (const id of pecas) {
+      const peca = PECAS[id];
+      if (peca) slots[peca.slot] = id;
+    }
+    if (!slots.cabeca || !slots.corpo || !slots.membros) {
+      this.io.to(socketId).emit("erro", "Monte seu monstro completo antes de batalhar.");
+      return;
+    }
+
+    const pecaIds = Object.values(slots).filter(Boolean);
+    const { stats, efeitos, tipos } = calcularStats(pecaIds);
+    const combos = verificarCombos(pecaIds);
+    for (const combo of combos) {
+      stats.hp  += combo.bonus.hp;
+      stats.atk += combo.bonus.atk;
+      stats.def += combo.bonus.def;
+      stats.spd += combo.bonus.spd;
+      for (const ef of combo.efeitos) {
+        if (!efeitos.includes(ef)) efeitos.push(ef);
+      }
+    }
+
+    jogador.monster = {
+      jogadorId: socketId,
+      jogadorNome: jogador.nome,
+      nome: nome || `Monstro de ${jogador.nome}`,
+      pecas: slots, stats, efeitos, tipos,
+      combos: combos.map((c) => ({ id: c.id, nome: c.nome, emoji: c.emoji, descricao: c.descricao })),
+    };
+
+    const bots = gerarBots(dificuldade || "facil");
+    this._botMonsters = {};
+    bots.forEach((b) => { this._botMonsters[b.jogadorId] = b; });
+    const todos = [jogador.monster, ...bots];
+
+    // Pontuação
+    this.pontuacao = {};
+    todos.forEach((m) => { this.pontuacao[m.jogadorId] = 0; });
+
+    const confrontos = gerarConfrontos(todos);
+    this.fase = FASE.COMBATE;
+
+    this._broadcast("fase_revelacao", { monstros: todos });
+
+    setTimeout(() => {
+      this._broadcast("fase_combate", {
+        totalConfrontos: confrontos.length,
+        nomes: todos.map((m) => m.nome),
+      });
+      this._executarConfrontos(confrontos, 0);
+    }, 4000);
+  }
+
   // ── Resultado ──────────────────────────────────────────────────────────────
 
   _encerrar() {
     this.fase = FASE.RESULTADO;
 
+    // Inclui jogadores humanos
     const ranking = Object.values(this.jogadores)
+      .filter((j) => j.monster)
       .map((j) => ({
         nome: j.nome,
         monster: j.monster,
         vitorias: this.pontuacao[j.id] || 0,
-      }))
-      .sort((a, b) => b.vitorias - a.vitorias);
+        isBot: false,
+      }));
 
+    // Inclui bots (ids que não são jogadores humanos)
+    for (const [id, wins] of Object.entries(this.pontuacao)) {
+      if (this.jogadores[id]) continue; // já adicionado
+      // Busca o monster do bot nos confrontos executados
+      const botMonster = this._botMonsters?.[id];
+      if (botMonster) {
+        ranking.push({ nome: botMonster.jogadorNome, monster: botMonster, vitorias: wins, isBot: true });
+      }
+    }
+
+    ranking.sort((a, b) => b.vitorias - a.vitorias);
     this._broadcast("resultado_final", { ranking });
   }
 

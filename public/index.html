@@ -15,9 +15,52 @@
       <h1>Monster Lab</h1>
       <p class="subtitulo">Crie seu monstro. Domine a arena.</p>
       <input id="input-nome" type="text" placeholder="Seu nome" maxlength="20" />
-      <input id="input-sala" type="text" placeholder="Código da sala (ex: ARENA)" maxlength="12" />
-      <button id="btn-entrar">Entrar na Sala</button>
+      <div class="modo-btns">
+        <button id="btn-solo" class="btn-modo">🤖 Jogar Solo</button>
+        <button id="btn-multi" class="btn-modo btn-secundario">👥 Multijogador</button>
+      </div>
       <p id="msg-erro" class="erro hidden"></p>
+    </div>
+  </div>
+
+  <!-- TELA: Dificuldade (solo) -->
+  <div id="tela-dificuldade" class="tela">
+    <div class="card">
+      <h2>🎯 Escolha a Dificuldade</h2>
+      <p class="info" style="margin-bottom:20px">Quantos bots e quão fortes?</p>
+      <div class="dificuldade-opcoes">
+        <button class="btn-dif" data-dif="facil">
+          <span class="dif-emoji">😌</span>
+          <span class="dif-nome">Fácil</span>
+          <span class="dif-desc">1 bot com peças simples</span>
+        </button>
+        <button class="btn-dif" data-dif="medio">
+          <span class="dif-emoji">😤</span>
+          <span class="dif-nome">Médio</span>
+          <span class="dif-desc">2 bots equilibrados</span>
+        </button>
+        <button class="btn-dif" data-dif="dificil">
+          <span class="dif-emoji">😈</span>
+          <span class="dif-nome">Difícil</span>
+          <span class="dif-desc">3 bots com combos ativos</span>
+        </button>
+        <button class="btn-dif" data-dif="aleatorio">
+          <span class="dif-emoji">🎲</span>
+          <span class="dif-nome">Aleatório</span>
+          <span class="dif-desc">Surpresa total</span>
+        </button>
+      </div>
+      <button id="btn-voltar-entrada" class="btn-secundario" style="margin-top:16px">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- TELA: Multijogador entrada -->
+  <div id="tela-multi" class="tela">
+    <div class="card">
+      <h2>👥 Multijogador</h2>
+      <input id="input-sala" type="text" placeholder="Código da sala (ex: ARENA)" maxlength="12" />
+      <button id="btn-entrar-sala">Entrar na Sala</button>
+      <button id="btn-voltar-modo" class="btn-secundario">← Voltar</button>
     </div>
   </div>
 
@@ -36,25 +79,22 @@
     <div class="criacao-layout">
       <div class="criacao-header">
         <h2>🧪 Monte seu Monstro</h2>
-        <div class="timer-criacao">⏱ <span id="timer-num">60</span>s</div>
+        <div id="timer-criacao-box" class="timer-criacao">⏱ <span id="timer-num">60</span>s</div>
       </div>
 
       <div class="criacao-corpo">
-        <!-- Painel esquerdo: seleção de peças -->
         <div class="painel-pecas">
           <div class="nome-monster-row">
             <input id="input-nome-monster" type="text" placeholder="Nome do seu monstro" maxlength="25" />
           </div>
-
           <div id="slots-container"></div>
         </div>
 
-        <!-- Painel direito: preview do monstro -->
         <div class="painel-preview">
           <div class="monster-card" id="preview-card">
             <div class="monster-emoji-area" id="preview-emojis">❓❓❓</div>
             <div class="monster-nome" id="preview-nome">?????</div>
-            <div class="monster-stats" id="preview-stats">
+            <div class="monster-stats">
               <div class="stat"><span class="stat-label">❤️ Vida</span><span id="stat-hp">—</span></div>
               <div class="stat"><span class="stat-label">⚔️ Ataque</span><span id="stat-atk">—</span></div>
               <div class="stat"><span class="stat-label">🛡️ Defesa</span><span id="stat-def">—</span></div>
@@ -62,7 +102,7 @@
             </div>
             <div id="preview-combos" class="combo-list"></div>
           </div>
-          <button id="btn-confirmar" disabled>✅ Confirmar Monstro</button>
+          <button id="btn-confirmar" disabled>✅ Batalhar!</button>
         </div>
       </div>
     </div>
@@ -71,7 +111,7 @@
   <!-- TELA: Revelação -->
   <div id="tela-revelacao" class="tela">
     <div class="card wide">
-      <h2>⚔️ Os Monstros Foram Criados!</h2>
+      <h2>⚔️ Os Monstros Entraram na Arena!</h2>
       <div id="grid-monstros"></div>
     </div>
   </div>
