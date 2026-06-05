@@ -169,8 +169,11 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .ban-bad{font-size:2rem;margin-bottom:6px}
 .ban-win{font-size:2rem;font-weight:900;color:var(--legendary);margin-bottom:6px}
 .rel-lista{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;justify-content:center}
-.rel-pip{font-size:.8rem;padding:2px 7px;background:rgba(245,158,11,.1);
-  border-radius:5px;border:1px solid rgba(245,158,11,.2)}
+.rel-pip{font-size:.75rem;padding:2px 7px;background:rgba(245,158,11,.1);
+  border-radius:5px;border:1px solid rgba(245,158,11,.2);cursor:default}
+.trait-tag{font-size:.72rem;padding:4px 8px;margin-top:4px;border-radius:7px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+  color:var(--accent);text-align:left}
 
 /* Revelação multi */
 #grid-monstros{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:6px 0}
@@ -442,6 +445,62 @@ const RELIQUIAS=[
   {id:"cura_troll",      nome:"Cura do Troll",      emoji:"🧌",desc:"Regenera 5 HP/turno.",      ef:"regeneracao"},
 ];
 
+// Traits: bônus passivos por número de peças da mesma facção
+const TRAITS=[
+  {
+    id:"draconico", nome:"Dracônico", emoji:"🐲",
+    pecas:["cabeca_dragao","membros_garras_dragao","asas_dragao"],
+    niveis:[
+      {min:2, desc:"+15% HP", aplicar:(s,ef)=>{ s.hp=Math.floor(s.hp*1.15) }},
+      {min:3, desc:"+30% Ataque + Fogo", aplicar:(s,ef)=>{ s.atk=Math.floor(s.atk*1.3); if(!ef.includes("fogo_persistente"))ef.push("fogo_persistente") }},
+    ]
+  },
+  {
+    id:"sombras", nome:"Sombras", emoji:"🌑",
+    pecas:["cabeca_demonio","corpo_demonio","asas_morcego","corpo_aranha"],
+    niveis:[
+      {min:2, desc:"+10 Velocidade", aplicar:(s,ef)=>{ s.spd+=10 }},
+      {min:3, desc:"20% Esquiva", aplicar:(s,ef)=>{ if(!ef.includes("esquiva"))ef.push("esquiva") }},
+    ]
+  },
+  {
+    id:"venenoso", nome:"Venenoso", emoji:"☠️",
+    pecas:["cabeca_cobra","corpo_aranha","membros_tentaculos"],
+    niveis:[
+      {min:2, desc:"Veneno Potente (+6 dano)", aplicar:(s,ef)=>{ if(!ef.includes("veneno_potente"))ef.push("veneno_potente") }},
+      {min:3, desc:"Veneno Permanente", aplicar:(s,ef)=>{ if(!ef.includes("veneno_permanente"))ef.push("veneno_permanente") }},
+    ]
+  },
+  {
+    id:"guardiao", nome:"Guardião", emoji:"🛡️",
+    pecas:["corpo_cavaleiro","asas_anjo","membros_bracos"],
+    niveis:[
+      {min:2, desc:"+15 Defesa", aplicar:(s,ef)=>{ s.def+=15 }},
+      {min:3, desc:"Regeneração", aplicar:(s,ef)=>{ if(!ef.includes("regeneracao"))ef.push("regeneracao") }},
+    ]
+  },
+  {
+    id:"bruto", nome:"Bruto", emoji:"💪",
+    pecas:["corpo_ogro","corpo_troll","membros_bracos","membros_garras"],
+    niveis:[
+      {min:2, desc:"+20 HP", aplicar:(s,ef)=>{ s.hp+=20 }},
+      {min:3, desc:"Berserk", aplicar:(s,ef)=>{ if(!ef.includes("berserk"))ef.push("berserk") }},
+    ]
+  },
+];
+
+function calcTraits(ids){
+  const set=new Set(ids);const ativos=[];
+  TRAITS.forEach(tr=>{
+    const match=tr.pecas.filter(p=>set.has(p)).length;
+    if(match>=2){
+      const nivel=tr.niveis.slice().reverse().find(n=>match>=n.min);
+      if(nivel)ativos.push({...tr,match,nivel});
+    }
+  });
+  return ativos;
+}
+
 const ZONAS=[
   {nome:"Floresta Sombria",emoji:"🌲",rar:["comum"]},
   {nome:"Pântano Venenoso",emoji:"🌿",rar:["comum","rara"]},
@@ -475,8 +534,13 @@ function buildMonster(nome,sel,jogId,jogNome,reliquias=[]){
   const combos=verifCombos(ids);
   combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;
     c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
-  reliquias.forEach(rid=>{const r=RELIQUIAS.find(x=>x.id===rid);if(r&&!efeitos.includes(r.ef))efeitos.push(r.ef)});
-  return{id:jogId,nome:nome||"Monstro",jogadorNome:jogNome,pecas:{...sel},stats,efeitos,combos,reliquias:[...reliquias]};
+  // Aplica traits
+  const traits=calcTraits(ids);
+  traits.forEach(tr=>tr.nivel.aplicar(stats,efeitos));
+  // Aplica relíquias
+  reliquias.forEach(rid=>{const r=RELIQUIAS.find(x=>x.id===rid);if(r&&r.ef&&!efeitos.includes(r.ef))efeitos.push(r.ef)});
+  stats.hp=Math.max(10,stats.hp);stats.atk=Math.max(1,stats.atk);stats.def=Math.max(0,stats.def);stats.spd=Math.max(1,stats.spd);
+  return{id:jogId,nome:nome||"Monstro",jogadorNome:jogNome,pecas:{...sel},stats,efeitos,combos,traits,reliquias:[...reliquias]};
 }
 
 function batalhar(mA,mB){
@@ -491,8 +555,12 @@ function batalhar(mA,mB){
       if(hasEf(at,"regeneracao")){const c=5;at.hp=Math.min(at.maxHp,at.hp+c);log.push({t:"cura",nome:at.nome,v:c,hp:at.hp})}
       let d=Math.max(1,at.atk-Math.floor(df.def*.5))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
       if(hasEf(at,"berserk")&&at.hp<at.maxHp*.5){d=Math.floor(d*1.5);log.push({t:"berserk",nome:at.nome})}
+      // Esquiva (trait Sombras nível 3)
+      if(hasEf(df,"esquiva")&&Math.random()<.2){log.push({t:"esquiva",nome:df.nome});continue}
       df.hp-=d;log.push({t:"atk",at:at.nome,df:df.nome,d,hpDf:Math.max(0,df.hp)});
-      if(hasEf(at,"veneno_permanente")){if(Math.random()<.5){adDot(df,{t:"veneno",turns:3,d:4});log.push({t:"env",nome:df.nome})}}
+      // Veneno potente (trait Venenoso nível 2): 6 de dano por tick
+      const vdano=hasEf(at,"veneno_potente")?6:4;
+      if(hasEf(at,"veneno_permanente")||hasEf(at,"veneno_potente")){if(Math.random()<.5){adDot(df,{t:"veneno",turns:3,d:vdano});log.push({t:"env",nome:df.nome})}}
       if(hasEf(at,"fogo_persistente")){if(Math.random()<.4){adDot(df,{t:"fogo",turns:2,d:6});log.push({t:"queima",nome:df.nome})}}
       df.dots.forEach(dot=>{if(dot.turns<=0)return;df.hp-=dot.d;dot.turns--;log.push({t:"dot",ef:dot.t,nome:df.nome,d:dot.d,hp:Math.max(0,df.hp)})});
       df.dots=df.dots.filter(x=>x.turns>0);
@@ -543,7 +611,8 @@ function rlGerarRecomp(rodada,monster){
   const sl=SLOTS[Math.floor(Math.random()*SLOTS.length)];
   const rp=Object.values(PECAS).filter(p=>p.slot===sl&&(p.raridade==="rara"||p.raridade==="lendaria"));
   if(rp.length){const np=rp[Math.floor(Math.random()*rp.length)];pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,peca:np})}
-  if(r>=2){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:rl.nome,desc:rl.desc,reliquia:rl})}}
+  // Relíquia só se tiver espaço (máx 3)
+  if(r>=2&&monster.reliquias.length<3){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:`${rl.nome} (${monster.reliquias.length+1}/3)`,desc:rl.desc,reliquia:rl})}}
   return pool.sort(()=>Math.random()-.5).slice(0,3);
 }
 function rlAplicarRecomp(monster,r){
@@ -638,6 +707,7 @@ function renderLogLine(e,nA,nB){
   else if(e.t==="env"){l.className+=" le";l.textContent=`🐍 ${e.nome} envenenado!`}
   else if(e.t==="queima"){l.className+=" le";l.textContent=`🔥 ${e.nome} em chamas!`}
   else if(e.t==="dot"){l.className+=" ld";l.textContent=`${e.ef==="veneno"?"🐍":"🔥"} ${e.nome} -${e.d} (${e.hp} HP)`;atuHP(e.nome,e.hp,nomeA,nomeB)}
+  else if(e.t==="esquiva"){l.className+=" le";l.textContent=`💨 ${e.nome} esquivou do ataque!`}
   else if(e.t==="berserk"){l.className+=" lb";l.textContent=`💢 ${e.nome} BERSERK!`}
   else if(e.t==="ress"){l.className+=" le";l.textContent=`🔥 ${e.nome} renasce! (${e.hp} HP)`}
   else if(e.t==="morte"){l.className+=" lm";l.textContent=`💀 ${e.nome} derrotado!`}
@@ -671,6 +741,7 @@ function rlIniciarDraft(){
   rlAtuPreview();mostrar("t-draft");
 }
 function rlAtuPreview(){
+  const ids=Object.values(rlSel).filter(Boolean);
   const s=calcPreviewStats(rlSel,rlCat);
   const emojis=SLOTS.map(sl=>{const p=rlCat[sl]?.find(x=>x.id===rlSel[sl]);return(p&&p.id!=="asas_nenhuma")?p.emoji:""}).filter(Boolean).join(" ");
   el("rl-emoji").textContent=emojis||"❓";
@@ -678,12 +749,24 @@ function rlAtuPreview(){
   el("rl-hp").textContent=Math.max(10,s.hp);el("rl-atk").textContent=Math.max(1,s.atk);
   el("rl-def").textContent=Math.max(0,s.def);el("rl-spd").textContent=Math.max(1,s.spd);
   el("rl-btn-ok").disabled=!(rlSel.cabeca&&rlSel.corpo&&rlSel.membros);
+  // Traits ativos
+  const traits=calcTraits(ids);
+  let traitHtml="";
+  traits.forEach(tr=>{traitHtml+=`<div class="trait-tag">${tr.emoji} <b>${tr.nome}</b> (${tr.match}x) — ${tr.nivel.desc}</div>`});
+  // Relíquias acumuladas
+  const rels=RUN?.monster?.reliquias||[];
+  const relHtml=rels.length?`<div style="margin-top:6px;font-size:.7rem;color:var(--muted)">Relíquias (${rels.length}/3):</div><div class="rel-lista">${rels.map(rid=>{const r=RELIQUIAS.find(x=>x.id===rid);return r?`<span class="rel-pip" title="${r.desc}">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:"";
+  let extra=el("rl-extra");
+  if(!extra){extra=document.createElement("div");extra.id="rl-extra";el("rl-btn-ok").parentNode.insertBefore(extra,el("rl-btn-ok"))}
+  extra.innerHTML=traitHtml+relHtml;
 }
 el("rl-inp-mn").addEventListener("input",rlAtuPreview);
 el("rl-btn-ok").addEventListener("click",()=>{
   const nome=el("rl-inp-mn").value.trim()||`Monstro de ${RUN.nome}`;
   const sel={...rlSel};sel.asas=sel.asas||"asas_nenhuma";
-  RUN.monster=buildMonster(nome,sel,"jogador",RUN.nome,RUN.reliquias||[]);
+  // Preserva relíquias do monstro anterior
+  const rels=RUN.monster?.reliquias||[];
+  RUN.monster=buildMonster(nome,sel,"jogador",RUN.nome,rels);
   RUN.rodada++;rlPreCombate();
 });
 
