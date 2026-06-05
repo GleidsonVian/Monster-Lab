@@ -204,6 +204,18 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .rc-prev-row span:first-child{color:var(--muted)}
 .rc-prev-troca{font-size:.78rem;margin-top:8px;padding:5px 9px;border-radius:6px;
   background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2)}
+/* Mutação */
+#mut-card.bom   {border-color:rgba(34,197,94,.4) !important;background:rgba(34,197,94,.05) !important}
+#mut-card.ruim  {border-color:rgba(239,68,68,.4) !important;background:rgba(239,68,68,.05) !important}
+#mut-card.neutro{border-color:rgba(245,158,11,.4)!important;background:rgba(245,158,11,.05)!important}
+.mut-diff-tag{font-size:.82rem;padding:4px 10px;border-radius:7px;font-weight:700}
+.mut-pos{background:rgba(34,197,94,.15);color:var(--accent)}
+.mut-neg{background:rgba(239,68,68,.15);color:var(--danger)}
+/* Boss ability log */
+.l-boss{color:#f97316;font-weight:700;text-align:center;font-size:.85rem}
+.l-altwin{color:var(--legendary);font-weight:700;text-align:center}
+.l-hab{color:var(--rare);font-style:italic}
+.l-info{color:var(--muted);font-size:.75rem;text-align:center;font-style:italic}
 /* Draft novo layout */
 .draft-wrap{width:100%;max-width:1000px;background:var(--card);
   border:1px solid var(--border);border-radius:16px;overflow:hidden}
@@ -469,6 +481,18 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
   </div>
 </div>
 
+<!-- MUTAÇÃO PÓS-COMBATE -->
+<div id="t-mutacao" class="tela">
+  <div class="card" id="mut-card">
+    <div style="font-size:.75rem;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">🧬 Mutação</div>
+    <div id="mut-emoji" style="font-size:3rem;margin-bottom:8px"></div>
+    <h2 id="mut-nome"></h2>
+    <p class="info" id="mut-desc" style="font-size:.95rem;margin-bottom:14px"></p>
+    <div id="mut-diffs" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px"></div>
+    <button id="mut-btn">Continuar →</button>
+  </div>
+</div>
+
 <!-- GAME OVER RL -->
 <div id="t-over" class="tela">
   <div class="card">
@@ -611,9 +635,20 @@ const ZONAS=[
   {nome:"Vulcão Ancestral",emoji:"🌋",rar:["comum","rara","lendaria"]},
 ];
 const BOSSES=[
-  {nome:"Rei Lobo",      pecas:["cabeca_lobo",  "corpo_troll",  "membros_garras_dragao","asas_nenhuma"]},
-  {nome:"Hidra Venenosa",pecas:["cabeca_cobra",  "corpo_aranha", "membros_tentaculos",   "asas_morcego"]},
-  {nome:"Dragão Ancião", pecas:["cabeca_dragao", "corpo_leviata","membros_garras_dragao","asas_dragao"]},
+  {nome:"Rei Lobo",      pecas:["cabeca_lobo",  "corpo_troll",  "membros_garras_dragao","asas_nenhuma"], efExtras:["uivo_lobo"]},
+  {nome:"Hidra Venenosa",pecas:["cabeca_cobra",  "corpo_aranha", "membros_tentaculos",   "asas_morcego"], efExtras:["regen_hidra"]},
+  {nome:"Dragão Ancião", pecas:["cabeca_dragao", "corpo_leviata","membros_garras_dragao","asas_dragao"],  efExtras:["imune_fogo","armadura"]},
+];
+
+// Mutações pós-combate
+const MUTACOES=[
+  {id:"pele_endurecida", nome:"Pele Endurecida",    emoji:"🧬",tipo:"bom",   desc:"+10 DEF, -5 SPD",         ap:(s)=>{s.def+=10;s.spd=Math.max(1,s.spd-5)}},
+  {id:"nucleo_instavel",  nome:"Núcleo Instável",    emoji:"🔥",tipo:"neutro",desc:"+20 ATK, -15 HP",         ap:(s)=>{s.atk+=20;s.hp=Math.max(10,s.hp-15)}},
+  {id:"maldicao",         nome:"Maldição",           emoji:"💀",tipo:"ruim",  desc:"-10 em tudo, +1 Relíquia", ap:(s)=>{s.hp=Math.max(10,s.hp-10);s.atk=Math.max(1,s.atk-10);s.def=Math.max(0,s.def-10);s.spd=Math.max(1,s.spd-10)}, especial:"reliquia"},
+  {id:"adrenalina",       nome:"Adrenalina",         emoji:"💉",tipo:"bom",   desc:"+15 SPD, +10 ATK",        ap:(s)=>{s.spd+=15;s.atk+=10}},
+  {id:"casca_ossea",      nome:"Casca Óssea",        emoji:"🦴",tipo:"bom",   desc:"+25 HP, -5 ATK",          ap:(s)=>{s.hp+=25;s.atk=Math.max(1,s.atk-5)}},
+  {id:"frenesi",          nome:"Frenesi de Batalha", emoji:"😤",tipo:"neutro",desc:"-20 HP, +30 ATK",         ap:(s)=>{s.hp=Math.max(10,s.hp-20);s.atk+=30}},
+  {id:"pele_pedra",       nome:"Pele de Pedra",      emoji:"🪨",tipo:"bom",   desc:"+20 DEF, -10 ATK",        ap:(s)=>{s.def+=20;s.atk=Math.max(1,s.atk-10)}},
 ];
 
 // ═══════════════════════════════════════════════
@@ -651,33 +686,118 @@ function batalhar(mA,mB){
   const a=mkC(mA),b=mkC(mB);const log=[];
   log.push({t:"inicio",txt:`⚔️ ${a.nome} VS ${b.nome}`});
   log.push({t:"stats",a:{nome:a.nome,hp:a.hp},b:{nome:b.nome,hp:b.hp}});
+  // Anunciar habilidades e mecânicas especiais
+  if(a.hab)log.push({t:"hab_info",nome:a.nome,hab:a.hab.tipo});
+  if(b.hab)log.push({t:"hab_info",nome:b.nome,hab:b.hab.tipo});
+  if(hasEf(b,"armadura"))log.push({t:"boss_info",msg:`🛡️ ${b.nome} tem Armadura — primeiro golpe absorvido!`});
+  if(hasEf(b,"imune_fogo"))log.push({t:"boss_info",msg:`🔥 ${b.nome} é imune a fogo!`});
+  if(hasEf(b,"uivo_lobo"))log.push({t:"boss_info",msg:`🐺 ${b.nome} vai uivar no turno 3!`});
+  if(hasEf(b,"regen_hidra"))log.push({t:"boss_info",msg:`💚 ${b.nome} regenera 8 HP por turno!`});
+
   let[p,s]=a.spd>=b.spd?[a,b]:[b,a];
+
   for(let T=1;T<=40;T++){
     log.push({t:"turno",T});
+
+    // ── Condição de vitória alternativa: Troll (sobreviver 15 turnos) ──
+    if(T===15&&a.hp>0&&b.hp>0&&mA.pecas?.corpo==="corpo_troll"){
+      log.push({t:"alt_win",msg:`🧌 ${a.nome} sobreviveu 15 turnos — Vitória do Troll!`});
+      log.push({t:"fim",v:a.nome});return{venc:mA.id,log,altWin:"troll"};
+    }
+
     for(const[at,df]of[[p,s],[s,p]]){
       if(at.hp<=0||df.hp<=0)break;
-      if(hasEf(at,"regeneracao")){const c=5;at.hp=Math.min(at.maxHp,at.hp+c);log.push({t:"cura",nome:at.nome,v:c,hp:at.hp})}
-      let d=Math.max(1,at.atk-Math.floor(df.def*.5))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
+
+      // ── Paralisia (Cabeça de Cobra) ──
+      if(at.paralisia){at.paralisia=false;log.push({t:"paralisia",nome:at.nome});continue}
+
+      // ── Regeneração (normal 5, hidra 8) ──
+      const regenVal=hasEf(at,"regen_hidra")?8:hasEf(at,"regeneracao")?5:0;
+      if(regenVal>0){at.hp=Math.min(at.maxHp,at.hp+regenVal);log.push({t:"cura",nome:at.nome,v:regenVal,hp:at.hp})}
+
+      // ── Habilidade ativa ──
+      if(at.hab&&T>=at.hab.prox){
+        at.hab.prox+=at.hab.cd;
+        if(at.hab.tipo==="sopro_fogo"){at.proxDobrado=true;log.push({t:"hab_ativa",tipo:"sopro_fogo",nome:at.nome})}
+        else if(at.hab.tipo==="paralisar"){df.paralisia=true;log.push({t:"hab_ativa",tipo:"paralisar",nome:at.nome,alvo:df.nome})}
+      }
+
+      // ── Boss: Uivo do Lobo (turno 3) ──
+      if(hasEf(at,"uivo_lobo")&&T===3&&!at.uivouJa){
+        at.uivouJa=true;at.atkBuff={mult:1.4,turns:2};
+        log.push({t:"boss_ability",msg:`🐺 ${at.nome} UIVA! +40% ATK por 2 turnos!`});
+      }
+
+      // ATK efetivo com buffs
+      let atkEf=at.atk;
+      if(at.atkBuff&&at.atkBuff.turns>0){atkEf=Math.floor(atkEf*at.atkBuff.mult);at.atkBuff.turns--}
+
+      let d=Math.max(1,atkEf-Math.floor(df.def*.5))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
       if(hasEf(at,"berserk")&&at.hp<at.maxHp*.5){d=Math.floor(d*1.5);log.push({t:"berserk",nome:at.nome})}
-      // Esquiva (trait Sombras nível 3)
+
+      // ── Sopro de Fogo: dano dobrado ──
+      if(at.proxDobrado){at.proxDobrado=false;d*=2;log.push({t:"sopro_fogo",nome:at.nome,d})}
+
+      // ── Esquiva ──
       if(hasEf(df,"esquiva")&&Math.random()<.2){log.push({t:"esquiva",nome:df.nome});continue}
-      df.hp-=d;log.push({t:"atk",at:at.nome,df:df.nome,d,hpDf:Math.max(0,df.hp)});
-      // Veneno potente (trait Venenoso nível 2): 6 de dano por tick
+
+      // ── Armadura (Dragão Ancião): absorve primeiro hit ──
+      if(hasEf(df,"armadura")&&!df.armaduraBroken){
+        df.armaduraBroken=true;df.efeitos=df.efeitos.filter(e=>e!=="armadura");
+        log.push({t:"armadura",nome:df.nome});continue;
+      }
+
+      df.hp-=d;df.danoRec=(df.danoRec||0)+d;
+      log.push({t:"atk",at:at.nome,df:df.nome,d,hpDf:Math.max(0,df.hp)});
+
+      // ── Veneno ──
       const vdano=hasEf(at,"veneno_potente")?6:4;
       if(hasEf(at,"veneno_permanente")||hasEf(at,"veneno_potente")){if(Math.random()<.5){adDot(df,{t:"veneno",turns:3,d:vdano});log.push({t:"env",nome:df.nome})}}
-      if(hasEf(at,"fogo_persistente")){if(Math.random()<.4){adDot(df,{t:"fogo",turns:2,d:6});log.push({t:"queima",nome:df.nome})}}
+
+      // ── Fogo (respeita imunidade) ──
+      if(hasEf(at,"fogo_persistente")&&!hasEf(df,"imune_fogo")){if(Math.random()<.4){adDot(df,{t:"fogo",turns:2,d:6});log.push({t:"queima",nome:df.nome})}}
+
+      // ── DoTs ──
       df.dots.forEach(dot=>{if(dot.turns<=0)return;df.hp-=dot.d;dot.turns--;log.push({t:"dot",ef:dot.t,nome:df.nome,d:dot.d,hp:Math.max(0,df.hp)})});
       df.dots=df.dots.filter(x=>x.turns>0);
+
       if(df.hp<=0){
         if(hasEf(df,"ressurreicao")&&!df.ressuscitou){df.ressuscitou=true;df.hp=Math.floor(df.maxHp*.3);log.push({t:"ress",nome:df.nome,hp:df.hp})}
-        else{log.push({t:"morte",nome:df.nome});const v=df===a?"b":"a";log.push({t:"fim",v:v==="a"?a.nome:b.nome});return{venc:v==="a"?mA.id:mB.id,log}}
+        else{
+          log.push({t:"morte",nome:df.nome});
+          const v=df===a?"b":"a";log.push({t:"fim",v:v==="a"?a.nome:b.nome});
+          return{venc:v==="a"?mA.id:mB.id,log};
+        }
       }
     }
   }
+
+  // ── Condição de vitória alternativa: Anjo (cura > dano sofrido) ──
+  if(mA.pecas?.asas==="asas_anjo"){
+    const curaTotal=log.filter(e=>e.t==="cura"&&e.nome===a.nome).reduce((s,e)=>s+e.v,0);
+    if(curaTotal>(a.danoRec||0)&&curaTotal>0){
+      log.push({t:"alt_win",msg:`👼 ${a.nome} curou mais do que sofreu — Vitória do Anjo!`});
+      log.push({t:"fim",v:a.nome});return{venc:mA.id,log,altWin:"anjo"};
+    }
+  }
+
   const v=a.hp>=b.hp?a:b;log.push({t:"empate",txt:`Tempo! ${v.nome} vence por HP.`});log.push({t:"fim",v:v.nome});
   return{venc:v===a?mA.id:mB.id,log};
 }
-function mkC(m){return{nome:m.nome,id:m.id,hp:m.stats.hp,maxHp:m.stats.hp,atk:m.stats.atk,def:m.stats.def,spd:m.stats.spd,efeitos:[...(m.efeitos||[])],dots:[],ressuscitou:false}}
+
+function mkC(m){
+  const hab=getHab(m.pecas);
+  return{nome:m.nome,id:m.id,hp:m.stats.hp,maxHp:m.stats.hp,atk:m.stats.atk,
+    def:m.stats.def,spd:m.stats.spd,efeitos:[...(m.efeitos||[])],dots:[],
+    ressuscitou:false,paralisia:false,atkBuff:null,uivouJa:false,
+    armaduraBroken:false,proxDobrado:false,danoRec:0,hab};
+}
+function getHab(pecas){
+  if(!pecas)return null;
+  if(pecas.cabeca==="cabeca_dragao")return{tipo:"sopro_fogo",cd:4,prox:4};
+  if(pecas.cabeca==="cabeca_cobra") return{tipo:"paralisar", cd:5,prox:5};
+  return null;
+}
 function hasEf(c,ef){return c.efeitos.includes(ef)}
 function adDot(c,d){const e=c.dots.find(x=>x.t===d.t);if(e)e.turns=Math.max(e.turns,d.turns);else c.dots.push({...d})}
 
@@ -697,7 +817,8 @@ function rlGerarInimigo(rodada){
   const mult=1+(rodada-1)*0.08;
   const bm=isBoss?1.2:1;
   let nome,ids;
-  if(isBoss){const b=BOSSES[Math.floor(rodada/3)-1];nome=b.nome+"  👑";ids=b.pecas}
+  let bossRef=null;
+  if(isBoss){bossRef=BOSSES[Math.floor(rodada/3)-1];nome=bossRef.nome+"  👑";ids=bossRef.pecas}
   else{
     const ns=["Chimera","Basilisco","Wyvern","Golem","Manticora","Gargoyle","Wendigo"];
     nome=ns[Math.floor(Math.random()*ns.length)];
@@ -707,6 +828,8 @@ function rlGerarInimigo(rodada){
   combos.forEach(c=>{stats.hp+=c.bonus.hp;stats.atk+=c.bonus.atk;stats.def+=c.bonus.def;stats.spd+=c.bonus.spd;c.efeitos.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})});
   stats.hp=Math.max(10,Math.floor(stats.hp*mult*bm));stats.atk=Math.max(1,Math.floor(stats.atk*mult*bm));
   stats.def=Math.max(0,Math.floor(stats.def*mult*bm));stats.spd=Math.max(1,Math.floor(stats.spd*mult));
+  // Adiciona efeitos especiais do boss
+  if(bossRef&&bossRef.efExtras){bossRef.efExtras.forEach(ef=>{if(!efeitos.includes(ef))efeitos.push(ef)})}
   const pecas={};ids.forEach(id=>{const p=PECAS[id];if(p)pecas[p.slot]=id});
   return{id:"inimigo",nome,pecas,stats,efeitos,combos,isBoss};
 }
@@ -851,7 +974,15 @@ function renderLogLine(e,nA,nB){
   else if(e.t==="env"){l.className+=" le";l.textContent=`🐍 ${e.nome} envenenado!`}
   else if(e.t==="queima"){l.className+=" le";l.textContent=`🔥 ${e.nome} em chamas!`}
   else if(e.t==="dot"){l.className+=" ld";l.textContent=`${e.ef==="veneno"?"🐍":"🔥"} ${e.nome} -${e.d} (${e.hp} HP)`;atuHP(e.nome,e.hp,nomeA,nomeB)}
-  else if(e.t==="esquiva"){l.className+=" le";l.textContent=`💨 ${e.nome} esquivou do ataque!`}
+  else if(e.t==="esquiva")  {l.className+=" le";  l.textContent=`💨 ${e.nome} esquivou!`}
+  else if(e.t==="paralisia"){l.className+=" le";  l.textContent=`🐍 ${e.nome} está paralisado — perde o turno!`}
+  else if(e.t==="armadura") {l.className+=" l-boss";l.textContent=`🛡️ Armadura absorveu o golpe!`}
+  else if(e.t==="sopro_fogo"){l.className+=" l-boss";l.textContent=`🔥 Sopro de Fogo! Dano dobrado: ${e.d}`}
+  else if(e.t==="hab_ativa"){l.className+=" l-hab";l.textContent=e.tipo==="sopro_fogo"?`🔥 ${e.nome} carrega o Sopro de Fogo!`:`🐍 ${e.nome} paralisa ${e.alvo}!`}
+  else if(e.t==="hab_info") {l.className+=" l-info";l.textContent=e.hab==="sopro_fogo"?`🔥 ${e.nome} usa Sopro de Fogo a cada 4 turnos`:`🐍 ${e.nome} usa Paralisar a cada 5 turnos`}
+  else if(e.t==="boss_ability"){l.className+=" l-boss";l.textContent=e.msg}
+  else if(e.t==="boss_info") {l.className+=" l-info";l.textContent=e.msg}
+  else if(e.t==="alt_win")   {l.className+=" l-altwin";l.textContent=e.msg}
   else if(e.t==="berserk"){l.className+=" lb";l.textContent=`💢 ${e.nome} BERSERK!`}
   else if(e.t==="ress"){l.className+=" le";l.textContent=`🔥 ${e.nome} renasce! (${e.hp} HP)`}
   else if(e.t==="morte"){l.className+=" lm";l.textContent=`💀 ${e.nome} derrotado!`}
@@ -1061,7 +1192,12 @@ function rlPreCombate(){
     animarLog(res.log,RUN.monster.nome,inimigoAtual.nome,()=>{
       processarLogStats(res.log,inimigoAtual.nome,venceu);
       mostrarBannerCombate(venceu,()=>{
-        if(venceu)rlMostrarRecomp();else rlGameOver();
+        if(venceu){
+          // 50% chance de mutação em rounds normais, sempre em boss
+          const forcaMut=inimigoAtual.isBoss||Math.random()<0.5;
+          if(forcaMut)rlMostrarMutacao(()=>rlMostrarRecomp());
+          else rlMostrarRecomp();
+        }else rlGameOver();
       });
     });
   },2200);
@@ -1159,6 +1295,44 @@ function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
     div.innerHTML="";div.style.display="none";
     el("rc-opcoes").querySelectorAll(".rc").forEach(c=>c.classList.remove("rc-sel"));
   };
+}
+
+// ── Mutação pós-combate ───────────────────────────────────────────────────
+function rlMostrarMutacao(callback){
+  const m=RUN.monster;
+  const mut=MUTACOES[Math.floor(Math.random()*MUTACOES.length)];
+
+  // Calcula diffs
+  const antes={...m.stats};
+  mut.ap&&mut.ap(m.stats);
+  const diffs=[];
+  for(const k of["hp","atk","def","spd"]){
+    const d=m.stats[k]-antes[k];
+    if(d!==0)diffs.push({k,d});
+  }
+  // Especial: relíquia grátis
+  let relGratis=null;
+  if(mut.especial==="reliquia"&&m.reliquias.length<3){
+    const disp=RELIQUIAS.filter(r=>!m.reliquias.includes(r.id));
+    if(disp.length){relGratis=disp[Math.floor(Math.random()*disp.length)];
+      m.reliquias.push(relGratis.id);
+      if(relGratis.ef&&!m.efeitos.includes(relGratis.ef))m.efeitos.push(relGratis.ef);}
+  }
+
+  el("mut-card").className="card "+mut.tipo;
+  el("mut-emoji").textContent=mut.emoji;
+  el("mut-nome").textContent=mut.nome;
+  el("mut-desc").textContent=mut.desc+(relGratis?` (${relGratis.emoji} ${relGratis.nome})` : "");
+
+  const diffsDiv=el("mut-diffs");diffsDiv.innerHTML="";
+  const lbl={hp:"❤️ Vida",atk:"⚔️ Ataque",def:"🛡️ Defesa",spd:"⚡ Velocidade"};
+  diffs.forEach(({k,d})=>{
+    const span=document.createElement("span");span.className=`mut-diff-tag ${d>0?"mut-pos":"mut-neg"}`;
+    span.textContent=`${lbl[k]} ${d>0?"+":""}${d}`;diffsDiv.appendChild(span);
+  });
+
+  el("mut-btn").onclick=callback;
+  mostrar("t-mutacao");
 }
 
 // ── Banner pós-combate ────────────────────────────────────────────────────
