@@ -954,6 +954,71 @@ function rlAplicarRecomp(monster,r){
 // ═══════════════════════════════════════════════
 const el=id=>document.getElementById(id);
 
+// ═══════════════════════════════════════════════
+//  AUDIO ENGINE (Web Audio API — sem dependências)
+// ═══════════════════════════════════════════════
+let _actx=null;
+let _mudo=localStorage.getItem("sfx_mudo")==="1";
+
+function actx(){
+  if(!_actx)_actx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_actx.state==="suspended")_actx.resume();
+  return _actx;
+}
+
+function _beep(freq,dur,type="square",vol=0.25,delay=0){
+  if(_mudo)return;
+  try{
+    const c=actx();
+    const osc=c.createOscillator();
+    const g=c.createGain();
+    osc.connect(g);g.connect(c.destination);
+    osc.type=type;
+    osc.frequency.setValueAtTime(freq,c.currentTime+delay);
+    g.gain.setValueAtTime(0,c.currentTime+delay);
+    g.gain.linearRampToValueAtTime(vol,c.currentTime+delay+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+delay+dur);
+    osc.start(c.currentTime+delay);
+    osc.stop(c.currentTime+delay+dur+0.05);
+  }catch(e){}
+}
+
+function sfxGolpe(){
+  _beep(220,0.07,"square",0.18);
+}
+function sfxGolpeForte(){
+  _beep(90, 0.25,"sawtooth",0.35);
+  _beep(65, 0.35,"square",  0.25,0.12);
+}
+function sfxFogo(){
+  _beep(180,0.09,"sawtooth",0.28);
+  _beep(230,0.08,"sawtooth",0.22,0.07);
+  _beep(140,0.12,"sawtooth",0.18,0.14);
+}
+function sfxVitoria(){
+  // Arpejo ascendente: C4 E4 G4 C5
+  [[262,.14],[330,.14],[392,.14],[523,.22]].forEach(([f,d],i)=>_beep(f,d,"triangle",0.38,i*.11));
+}
+function sfxDerrota(){
+  // Tom descendente triste: E4 C#4 Bb3 G3
+  [[330,.22],[277,.22],[233,.22],[196,.3]].forEach(([f,d],i)=>_beep(f,d,"triangle",0.32,i*.16));
+}
+function sfxRecompensa(){
+  _beep(523,.09,"triangle",0.28);
+  _beep(659,.14,"triangle",0.28,0.11);
+}
+function sfxBoss(){
+  _beep(55,.35,"sawtooth",0.45);
+  _beep(73,.25,"square",  0.28,0.18);
+}
+function sfxEvento(){
+  _beep(370,.08,"triangle",0.22);
+  _beep(440,.1, "triangle",0.22,0.09);
+}
+function sfxEndless(){
+  [[196,.1],[247,.1],[294,.1],[370,.1],[494,.18]].forEach(([f,d],i)=>_beep(f,d,"triangle",0.35,i*.09));
+}
+
 const RL_TELAS_HUD=new Set(["t-draft","t-pre","t-combate","t-recomp","t-evento","t-mutacao"]);
 
 function mostrar(id){
@@ -990,6 +1055,12 @@ function atualizarHUD(){
     const info=document.createElement("div");info.className="hud-info";info.textContent=`R${atual}`;inner.appendChild(info);
   }
 }
+
+function toggleMudo(){
+  _mudo=!_mudo;localStorage.setItem("sfx_mudo",_mudo?"1":"0");
+  const b=el("btn-mudo");if(b)b.textContent=_mudo?"🔇":"🔊";
+}
+function initMudoBtn(){const b=el("btn-mudo");if(b)b.textContent=_mudo?"🔇":"🔊"}
 
 function mostrarErro(msg){el("msg-erro").textContent=msg;el("msg-erro").style.display="block"}
 
@@ -1087,7 +1158,7 @@ function renderLogLine(e,nA,nB){
   const nomeA=nA,nomeB=nB;
   if(e.t==="inicio"){l.className+=" li";l.textContent=e.txt}
   else if(e.t==="turno"){l.className+=" lt";l.textContent=`— Turno ${e.T} —`}
-  else if(e.t==="atk"){l.className+=" la";l.innerHTML=`<b>${e.at}</b> → <span class="ld">-${e.d} HP</span> ${e.df}: ${e.hpDf} HP`;atuHP(e.df,e.hpDf,nomeA,nomeB)}
+  else if(e.t==="atk"){l.className+=" la";l.innerHTML=`<b>${e.at}</b> → <span class="ld">-${e.d} HP</span> ${e.df}: ${e.hpDf} HP`;atuHP(e.df,e.hpDf,nomeA,nomeB);sfxGolpe()}
   else if(e.t==="cura"){l.className+=" lc";l.textContent=`🌿 ${e.nome} regenera +${e.v} HP`}
   else if(e.t==="env"){l.className+=" le";l.textContent=`🐍 ${e.nome} envenenado!`}
   else if(e.t==="queima"){l.className+=" le";l.textContent=`🔥 ${e.nome} em chamas!`}
@@ -1095,8 +1166,8 @@ function renderLogLine(e,nA,nB){
   else if(e.t==="esquiva")  {l.className+=" le";  l.textContent=`💨 ${e.nome} esquivou!`}
   else if(e.t==="paralisia"){l.className+=" le";  l.textContent=`🐍 ${e.nome} está paralisado — perde o turno!`}
   else if(e.t==="armadura") {l.className+=" l-boss";l.textContent=`🛡️ Armadura absorveu o golpe!`}
-  else if(e.t==="sopro_fogo"){l.className+=" l-boss";l.textContent=`🔥 Sopro de Fogo! Dano dobrado: ${e.d}`}
-  else if(e.t==="esmagar")       {l.className+=" l-boss";l.textContent=`👑 ${e.nome} ESMAGA! ${e.d} de dano!`}
+  else if(e.t==="sopro_fogo"){l.className+=" l-boss";l.textContent=`🔥 Sopro de Fogo! Dano dobrado: ${e.d}`;sfxFogo()}
+  else if(e.t==="esmagar")       {l.className+=" l-boss";l.textContent=`👑 ${e.nome} ESMAGA! ${e.d} de dano!`;sfxGolpeForte()}
   else if(e.t==="esquiva_primeiro"){l.className+=" le";l.textContent=`⚡ ${e.nome} esquiva com as Asas da Tempestade!`}
   else if(e.t==="hab_ativa"){l.className+=" l-hab";
     const txt={sopro_fogo:`🔥 ${e.nome} carrega o Sopro de Fogo!`,paralisar:`🐍 ${e.nome} paralisa ${e.alvo}!`,esmagar:`👑 ${e.nome} prepara o ESMASH!`};
@@ -1104,7 +1175,7 @@ function renderLogLine(e,nA,nB){
   else if(e.t==="hab_info") {l.className+=" l-info";
     const txt={sopro_fogo:`🔥 ${e.nome} usa Sopro de Fogo a cada 4 turnos`,paralisar:`🐍 ${e.nome} usa Paralisar a cada 5 turnos`,esmagar:`👑 ${e.nome} usa Esmash a cada 6 turnos`};
     l.textContent=txt[e.hab]||e.hab}
-  else if(e.t==="boss_ability"){l.className+=" l-boss";l.textContent=e.msg}
+  else if(e.t==="boss_ability"){l.className+=" l-boss";l.textContent=e.msg;sfxBoss()}
   else if(e.t==="boss_info") {l.className+=" l-info";l.textContent=e.msg}
   else if(e.t==="alt_win")   {l.className+=" l-altwin";l.textContent=e.msg}
   else if(e.t==="berserk"){l.className+=" lb";l.textContent=`💢 ${e.nome} BERSERK!`}
@@ -1148,7 +1219,7 @@ function rlMostrarEvento(){
   if(ev.id==="mercador")renderEvMercador(cont);
   else if(ev.id==="altar")renderEvAltar(cont);
   else if(ev.id==="treino")renderEvTreino(cont);
-  mostrar("t-evento");
+  sfxEvento();mostrar("t-evento");
 }
 
 function evProsseguir(){setTimeout(()=>rlPreCombate(),200)}
@@ -1340,6 +1411,7 @@ function rlMostrarRecomp(recompensasRestantes){
 }
 
 function mostrarBannerEndless(cb){
+  sfxEndless();
   const ov=document.createElement("div");ov.className="combat-overlay";
   ov.style.background="rgba(10,14,26,.92)";
   ov.innerHTML=`
@@ -1379,7 +1451,7 @@ function _rlRecompImpl(recompensasRestantes){
     });
     grid.appendChild(card);
   });
-  mostrar("t-recomp");
+  sfxRecompensa();mostrar("t-recomp");
 }
 
 function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
@@ -1485,6 +1557,7 @@ function rlMostrarMutacao(callback){
 
 // ── Banner pós-combate ────────────────────────────────────────────────────
 function mostrarBannerCombate(venceu, callback){
+  if(venceu)sfxVitoria();else sfxDerrota();
   const ov=document.createElement("div");ov.className="combat-overlay";
   ov.innerHTML=`
     <div class="cb-text ${venceu?"vit":"der"}">${venceu?"🏆<br>Vitória!":"💀<br>Derrotado!"}</div>
@@ -1541,6 +1614,7 @@ function rlVitoria(){
 }
 el("ev-btn-pular").addEventListener("click",()=>evProsseguir());
 el("btn-over").addEventListener("click",()=>location.reload());
+initMudoBtn();
 el("btn-win").addEventListener("click",()=>location.reload());
 
 // ═══════════════════════════════════════════════
@@ -1693,6 +1767,7 @@ function modoOffline(){
 <!-- HUD de progresso da run -->
 <div id="rl-hud" class="rl-hud hidden">
   <div id="rl-hud-inner" class="rl-hud-inner"></div>
+  <button id="btn-mudo" onclick="toggleMudo()" title="Ligar/Desligar sons" style="margin-left:14px;width:auto;padding:3px 9px;font-size:.85rem;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;flex-shrink:0"></button>
 </div>
 </body>
 </html>
