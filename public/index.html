@@ -887,7 +887,7 @@ function mostrarPreviewRecomp(r,div){
     </div>`;
   div.style.display="block";
 
-  el("rc-btn-ok").onclick=()=>{ rlAplicarRecomp(RUN.monster,r); setTimeout(()=>rlIniciarDraft(),200) };
+  el("rc-btn-ok").onclick=()=>{ rlAplicarRecomp(RUN.monster,r); RUN.rodada++; setTimeout(()=>rlPreCombate(),200) };
   el("rc-btn-nao").onclick=()=>{
     div.innerHTML="";div.style.display="none";
     el("rc-opcoes").querySelectorAll(".rc").forEach(c=>c.classList.remove("rc-sel"));
