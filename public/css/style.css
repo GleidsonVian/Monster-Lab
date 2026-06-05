@@ -415,6 +415,19 @@ button:disabled { background: #1e2d40; color: var(--muted); cursor: not-allowed;
   border: 1px solid rgba(245,158,11,0.2);
 }
 
+/* ── Recompensa preview ─────────────────────────────── */
+.rc-sel { border-color: var(--accent2) !important; background: rgba(245,158,11,.08) !important; }
+.rc-prev-box {
+  margin-top: 14px; padding: 14px 16px; border-radius: 12px;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  text-align: left;
+}
+.rc-prev-title { font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.rc-prev-stats { display: flex; flex-direction: column; gap: 6px; }
+.rc-prev-row { display: flex; justify-content: space-between; font-size: .88rem; }
+.rc-prev-row span:first-child { color: var(--muted); }
+.rc-prev-troca { font-size: .8rem; margin-top: 10px; padding: 6px 10px; border-radius: 7px; background: rgba(168,85,247,.08); border: 1px solid rgba(168,85,247,.2); }
+
 /* ── Bot badges ─────────────────────────────────────── */
 .badge-bot {
   font-size: 0.7rem; padding: 2px 7px; border-radius: 99px;
