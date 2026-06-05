@@ -659,7 +659,7 @@ function renderSlots(containerId,selObj,cat,onChange){
       const tags=[st.hp!==0?`<span class="ps-t">❤️${st.hp>0?"+":""}${st.hp}</span>`:"",st.atk!==0?`<span class="ps-t">⚔️+${st.atk}</span>`:"",st.def!==0?`<span class="ps-t">🛡️+${st.def}</span>`:"",st.spd!==0?`<span class="ps-t">⚡${st.spd>0?"+":""}${st.spd}</span>`:""].filter(Boolean).join("");
       b.innerHTML=`<span class="pe">${p.emoji}</span><span class="pn">${p.nome}</span><span class="br ${p.raridade}">${p.raridade}</span><div class="peca-stats">${tags||'<span class="ps-t" style="color:var(--muted)">—</span>'}</div>`;
       b.title=p.descricao;
-      if(p.id==="asas_nenhuma")b.classList.add("sel");
+      if(selObj[slot]===p.id||(selObj[slot]==null&&p.id==="asas_nenhuma"))b.classList.add("sel");
       b.addEventListener("click",()=>{cont.querySelectorAll(`.pb[data-slot="${slot}"]`).forEach(x=>x.classList.remove("sel"));b.classList.add("sel");selObj[slot]=p.id;onChange()});
       o.appendChild(b);
     });
@@ -741,12 +741,29 @@ let rlCat=null;
 let inimigoAtual=null;
 
 function rlIniciarDraft(){
-  rlSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+  // Pré-carrega peças do monstro atual (round 2+)
+  if(RUN.monster){
+    rlSel={...RUN.monster.pecas};
+  } else {
+    rlSel={cabeca:null,corpo:null,membros:null,asas:"asas_nenhuma"};
+  }
+
   const rod=RUN.rodada+1;
   el("badge-rod").textContent=`Rodada ${rod} de 9`;
   const zi=Math.min(Math.floor((rod-1)/3),2);const rar=ZONAS[zi].rar;
   rlCat={};
-  SLOTS.forEach(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&rar.includes(p.raridade));rlCat[sl]=pool.sort(()=>Math.random()-.5).slice(0,3)});
+  SLOTS.forEach(sl=>{
+    const pool=Object.values(PECAS).filter(p=>p.slot===sl&&rar.includes(p.raridade));
+    let opts=pool.sort(()=>Math.random()-.5).slice(0,3);
+    // Garante que a peça atual do monstro aparece nas opções
+    const atualId=rlSel[sl];
+    if(atualId&&!opts.find(p=>p.id===atualId)){
+      const pecaAtual=PECAS[atualId];
+      if(pecaAtual)opts[0]=pecaAtual; // substitui a primeira opção
+    }
+    rlCat[sl]=opts;
+  });
+
   renderSlots("rl-slots",rlSel,rlCat,rlAtuPreview);
   rlAtuPreview();mostrar("t-draft");
 }
