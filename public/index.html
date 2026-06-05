@@ -168,6 +168,26 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .ban-ok{font-size:1.3rem;color:var(--accent);font-weight:700;margin-bottom:4px}
 .ban-bad{font-size:2rem;margin-bottom:6px}
 .ban-win{font-size:2rem;font-weight:900;color:var(--legendary);margin-bottom:6px}
+/* Banner pós-combate */
+.combat-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;background:rgba(10,14,26,.88);backdrop-filter:blur(6px);
+  z-index:200;animation:bIn .35s ease}
+.combat-overlay.out{animation:bOut .35s ease forwards}
+.cb-text{font-size:3.8rem;font-weight:900;text-align:center;line-height:1.1;
+  animation:bPulse .5s cubic-bezier(.175,.885,.32,1.275)}
+.cb-text.vit{color:var(--accent);text-shadow:0 0 40px rgba(34,197,94,.6)}
+.cb-text.der{color:var(--danger);text-shadow:0 0 40px rgba(239,68,68,.6)}
+.cb-sub{font-size:1rem;color:var(--muted);margin-top:10px;font-weight:400}
+@keyframes bIn{from{opacity:0}to{opacity:1}}
+@keyframes bOut{from{opacity:1}to{opacity:0}}
+@keyframes bPulse{from{transform:scale(.4);opacity:0}60%{transform:scale(1.08)}to{transform:scale(1);opacity:1}}
+/* Stats de run */
+.stats-run{display:flex;flex-direction:column;gap:7px;margin:14px 0}
+.sr-item{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 14px;border-radius:9px;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);font-size:.88rem}
+.sr-label{color:var(--muted)}
+.sr-val{font-weight:700;color:var(--text)}
 .rel-lista{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;justify-content:center}
 .rel-pip{font-size:.75rem;padding:2px 7px;background:rgba(245,158,11,.1);
   border-radius:5px;border:1px solid rgba(245,158,11,.2);cursor:default}
@@ -619,7 +639,10 @@ function adDot(c,d){const e=c.dots.find(x=>x.t===d.t);if(e)e.turns=Math.max(e.tu
 //  ROGUELIKE (client-side, sem servidor)
 // ═══════════════════════════════════════════════
 let RUN=null;
-function novaRun(nome){RUN={nome,rodada:0,monster:null,reliquias:[],bonusPendentes:[]}}
+function novaRun(nome){
+  RUN={nome,rodada:0,monster:null,reliquias:[],bonusPendentes:[],
+    stats:{danoTotal:0,maiorDano:0,esquivas:0,batalhas:0,vitorias:0}};
+}
 
 function rlGerarInimigo(rodada){
   const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
@@ -959,8 +982,12 @@ function rlPreCombate(){
   setTimeout(()=>{
     const res=batalhar(RUN.monster,inimigoAtual);
     initCombateUI(RUN.monster.nome,inimigoAtual.nome,RUN.monster.stats.hp,inimigoAtual.stats.hp);
+    const venceu=res.venc===RUN.monster.id;
     animarLog(res.log,RUN.monster.nome,inimigoAtual.nome,()=>{
-      if(res.venc===RUN.monster.id)rlMostrarRecomp();else rlGameOver();
+      processarLogStats(res.log,inimigoAtual.nome,venceu);
+      mostrarBannerCombate(venceu,()=>{
+        if(venceu)rlMostrarRecomp();else rlGameOver();
+      });
     });
   },2200);
 }
@@ -1059,15 +1086,57 @@ function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
   };
 }
 
+// ── Banner pós-combate ────────────────────────────────────────────────────
+function mostrarBannerCombate(venceu, callback){
+  const ov=document.createElement("div");ov.className="combat-overlay";
+  ov.innerHTML=`
+    <div class="cb-text ${venceu?"vit":"der"}">${venceu?"🏆<br>Vitória!":"💀<br>Derrotado!"}</div>
+    <div class="cb-sub">${venceu?"Prepare-se para a recompensa...":"A run termina aqui."}</div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{
+    ov.classList.add("out");
+    setTimeout(()=>{ov.remove();callback()},350);
+  },1600);
+}
+
+// ── Coleta stats do log de batalha ────────────────────────────────────────
+function processarLogStats(log,nomeInimigo,venceu){
+  const s=RUN.stats;s.batalhas++;if(venceu)s.vitorias++;
+  log.forEach(e=>{
+    if(e.t==="atk"&&e.at===RUN.monster.nome){s.danoTotal+=e.d;s.maiorDano=Math.max(s.maiorDano,e.d)}
+    if(e.t==="dot"&&e.nome===nomeInimigo){s.danoTotal+=e.d}
+    if(e.t==="esquiva"&&e.nome===RUN.monster.nome){s.esquivas++}
+  });
+}
+
+// ── Stats HTML helper ─────────────────────────────────────────────────────
+function htmlStats(m){
+  const s=RUN.stats;
+  const rels=m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:"";
+  return`
+    <div class="mcard-n">${m.nome}</div>
+    <div class="mcard-s" style="margin-top:8px">
+      <div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div>
+      <div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div>
+      <div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div>
+      <div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div>
+    </div>${rels}
+    <div class="stats-run" style="margin-top:14px">
+      <div class="sr-item"><span class="sr-label">⚔️ Dano total causado</span><span class="sr-val">${s.danoTotal}</span></div>
+      <div class="sr-item"><span class="sr-label">💥 Maior golpe</span><span class="sr-val">${s.maiorDano}</span></div>
+      <div class="sr-item"><span class="sr-label">💨 Esquivas</span><span class="sr-val">${s.esquivas}</span></div>
+      <div class="sr-item"><span class="sr-label">🏆 Batalhas vencidas</span><span class="sr-val">${s.vitorias}/${s.batalhas}</span></div>
+      <div class="sr-item"><span class="sr-label">💎 Relíquias coletadas</span><span class="sr-val">${m.reliquias.length}/3</span></div>
+    </div>`;
+}
+
 function rlGameOver(){
   el("over-info").textContent=`Você chegou até a rodada ${RUN.rodada} de 9`;
-  const m=RUN.monster;
-  el("over-monster").innerHTML=`<div class="mcard-n">${m.nome}</div><div class="mcard-s" style="margin-top:8px"><div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div><div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div><div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div><div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div></div>${m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:""}`;
+  el("over-monster").innerHTML=htmlStats(RUN.monster);
   mostrar("t-over");
 }
 function rlVitoria(){
-  const m=RUN.monster;
-  el("win-monster").innerHTML=`<div class="mcard-n">${m.nome}</div><div class="mcard-s" style="margin-top:8px"><div class="mst"><span class="msl">❤️</span><span>${m.stats.hp}</span></div><div class="mst"><span class="msl">⚔️</span><span>${m.stats.atk}</span></div><div class="mst"><span class="msl">🛡️</span><span>${m.stats.def}</span></div><div class="mst"><span class="msl">⚡</span><span>${m.stats.spd}</span></div></div>${m.reliquias.length?`<div class="rel-lista" style="margin-top:8px">${m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rel-pip">${r.emoji} ${r.nome}</span>`:""}).join("")}</div>`:""}`;
+  el("win-monster").innerHTML=htmlStats(RUN.monster);
   mostrar("t-win");
 }
 el("ev-btn-pular").addEventListener("click",()=>evProsseguir());
