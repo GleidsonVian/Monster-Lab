@@ -56,9 +56,9 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .slot-titulo{font-size:.72rem;font-weight:700;letter-spacing:1px;color:var(--muted);
   text-transform:uppercase;margin-bottom:8px}
 .slot-opcoes{display:flex;flex-wrap:wrap;gap:7px}
-.peca-btn{display:flex;flex-direction:column;align-items:center;padding:9px 11px;gap:3px;
+.peca-btn{display:flex;flex-direction:column;align-items:center;padding:10px 10px 8px;gap:2px;
   background:rgba(255,255,255,.03);border:2px solid var(--border);border-radius:10px;
-  cursor:pointer;min-width:76px;text-align:center;
+  cursor:pointer;min-width:96px;max-width:110px;text-align:center;
   width:auto;margin:0;font-weight:400;color:var(--text);font-size:.72rem;transition:all .15s}
 .peca-btn:hover{border-color:var(--accent);background:rgba(34,197,94,.06)}
 .peca-btn.sel{border-color:var(--accent);background:rgba(34,197,94,.12)}
@@ -66,11 +66,15 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .peca-btn.rara:hover,.peca-btn.rara.sel{border-color:var(--rare);background:rgba(168,85,247,.12)}
 .peca-btn.lendaria{border-color:rgba(245,158,11,.35)}
 .peca-btn.lendaria:hover,.peca-btn.lendaria.sel{border-color:var(--legendary);background:rgba(245,158,11,.1)}
-.pe{font-size:1.5rem}.pn{font-size:.68rem;line-height:1.2}
-.br{font-size:.58rem;padding:1px 4px;border-radius:4px}
+.pe{font-size:1.6rem}
+.pn{font-size:.7rem;line-height:1.2;margin:2px 0}
+.br{font-size:.55rem;padding:1px 5px;border-radius:4px;margin-bottom:4px}
 .br.comum{background:rgba(148,163,184,.15);color:var(--muted)}
 .br.rara{background:rgba(168,85,247,.2);color:var(--rare)}
 .br.lendaria{background:rgba(245,158,11,.2);color:var(--legendary)}
+.peca-stats{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px}
+.ps-tag{font-size:.6rem;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);color:var(--text)}
+.ps-tag.zero{color:var(--muted)}
 .painel-prev{width:240px;flex-shrink:0;padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .mcard{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
   border-radius:12px;padding:18px 16px;text-align:center}
@@ -465,7 +469,14 @@ function renderizarDraft(){
       const btn=document.createElement("button");
       btn.className=`peca-btn ${p.raridade}`;
       btn.dataset.slot=sl;btn.dataset.id=p.id;
-      btn.innerHTML=`<span class="pe">${p.emoji}</span><span class="pn">${p.nome}</span><span class="br ${p.raridade}">${p.raridade}</span>`;
+      const st=p.stats;
+      const tags=[
+        st.hp  !==0?`<span class="ps-tag">❤️${st.hp>0?"+":""}${st.hp}</span>`:"",
+        st.atk !==0?`<span class="ps-tag">⚔️+${st.atk}</span>`:"",
+        st.def !==0?`<span class="ps-tag">🛡️+${st.def}</span>`:"",
+        st.spd !==0?`<span class="ps-tag">⚡${st.spd>0?"+":""}${st.spd}</span>`:"",
+      ].filter(Boolean).join("");
+      btn.innerHTML=`<span class="pe">${p.emoji}</span><span class="pn">${p.nome}</span><span class="br ${p.raridade}">${p.raridade}</span><div class="peca-stats">${tags||'<span class="ps-tag zero">—</span>'}</div>`;
       btn.title=`${p.descricao}\n❤️+${p.stats.hp} ⚔️+${p.stats.atk} 🛡️+${p.stats.def} ⚡+${p.stats.spd}`;
       if(p.id==="asas_nenhuma"){btn.classList.add("sel")}
       btn.addEventListener("click",()=>{
