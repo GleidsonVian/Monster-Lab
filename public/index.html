@@ -151,8 +151,24 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .prog{font-size:.82rem;color:var(--muted);text-align:center}
 
 /* Recompensa */
-.rc-grid{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.rc{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:10px;
+.rc-layout{display:flex;gap:16px;align-items:flex-start;margin-top:12px}
+.rc-monster-panel{width:180px;flex-shrink:0;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+.rc-mp-title{font-size:.62rem;font-weight:700;letter-spacing:1px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:8px}
+.rc-mp-nome{font-weight:700;font-size:.85rem;color:var(--accent2);margin-bottom:8px;line-height:1.2}
+.rc-mp-stat{display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;
+  border-bottom:1px solid rgba(255,255,255,.04)}
+.rc-mp-stat:last-of-type{border-bottom:none}
+.rc-mp-stat span:first-child{color:var(--muted)}
+.rc-mp-stat span:last-child{font-weight:600}
+.rc-mp-rels{margin-top:8px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.rc-mp-rel{font-size:.68rem;padding:2px 6px;border-radius:5px;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--accent2)}
+.rc-mp-empty{font-size:.72rem;color:var(--muted);margin-top:6px;font-style:italic}
+.rc-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+.rc-grid{display:flex;flex-direction:column;gap:8px}
+.rc{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-radius:10px;
   cursor:pointer;border:2px solid var(--border);background:rgba(255,255,255,.03);
   transition:all .15s;text-align:left}
 .rc:hover{border-color:var(--accent);background:rgba(34,197,94,.07)}
@@ -160,9 +176,17 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .rc.reliquia:hover{border-color:var(--legendary);background:rgba(245,158,11,.07)}
 .rc.peca_swap{border-color:rgba(168,85,247,.35)}
 .rc.peca_swap:hover{border-color:var(--rare);background:rgba(168,85,247,.07)}
-.rc-e{font-size:1.7rem;flex-shrink:0}
+.rc.evolucao{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.04)}
+.rc.evolucao:hover{border-color:#fbbf24;background:rgba(251,191,36,.09)}
+.rc-evo-badge{font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  color:#fbbf24;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);
+  border-radius:4px;padding:1px 6px;display:inline-block;margin-bottom:4px}
+.rc-evo-lendaria{color:var(--legendary);background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.4)}
+.rc-e{font-size:1.7rem;flex-shrink:0;margin-top:1px}
 .rc-l{font-weight:700;font-size:.9rem}
-.rc-d{font-size:.76rem;color:var(--muted);margin-top:1px}
+.rc-d{font-size:.76rem;color:var(--muted);margin-top:2px}
+.rc-ctx{font-size:.72rem;color:var(--accent);margin-top:3px;font-weight:600}
+@media(max-width:560px){.rc-layout{flex-direction:column}.rc-monster-panel{width:100%}}
 
 /* Banners */
 .ban-ok{font-size:1.3rem;color:var(--accent);font-weight:700;margin-bottom:4px}
@@ -267,6 +291,31 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .draft-fp-stats b{color:var(--text)}
 @media(max-width:700px){.draft-grid{grid-template-columns:repeat(2,1fr)}}
 
+/* Combo Hints no Draft */
+.draft-combo-hints{border-top:1px solid var(--border);padding:10px 20px;
+  display:flex;flex-wrap:wrap;gap:7px;background:rgba(0,0,0,.15);min-height:0}
+.draft-combo-hints:empty{padding:0;border-top:none}
+.ch-item{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:9px;
+  border:1px solid var(--border);background:rgba(255,255,255,.03);
+  font-size:.78rem;transition:all .2s;flex-shrink:0}
+.ch-item.ativo{border-color:var(--accent);background:rgba(34,197,94,.08)}
+.ch-item.quase{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+.ch-item.longe{border-color:rgba(255,255,255,.06);opacity:.55}
+.ch-emoji{font-size:1rem;flex-shrink:0}
+.ch-nome{font-weight:700;color:var(--text)}
+.ch-item.ativo .ch-nome{color:var(--accent)}
+.ch-item.quase .ch-nome{color:var(--accent2)}
+.ch-bar{display:flex;gap:3px;flex-shrink:0}
+.ch-pip{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+.ch-pip.on{background:var(--accent);border-color:var(--accent)}
+.ch-item.quase .ch-pip.on{background:var(--accent2);border-color:var(--accent2)}
+.ch-falta{color:var(--muted);font-size:.72rem;margin-left:2px}
+.ch-falta b{color:var(--accent2)}
+.ch-falta .disponivel{color:var(--accent)}
+.ch-bonus{font-size:.68rem;padding:1px 6px;border-radius:99px;margin-left:2px;
+  background:rgba(34,197,94,.12);color:var(--accent);border:1px solid rgba(34,197,94,.2)}
+.ch-item.quase .ch-bonus{background:rgba(245,158,11,.12);color:var(--accent2);border-color:rgba(245,158,11,.2)}
+
 /* Eventos */
 .ev-opcao{display:flex;align-items:center;gap:14px;padding:14px 16px;
   border-radius:12px;border:2px solid var(--border);background:rgba(255,255,255,.03);
@@ -328,8 +377,29 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 .hud-dot.endless {width:30px;height:30px;font-size:.8rem;background:rgba(168,85,247,.2);color:var(--rare);border-color:var(--rare)}
 .hud-linha{flex:1;height:2px;background:var(--border);transition:background .3s;min-width:8px}
 .hud-linha.feita {background:var(--accent)}
+.hud-linha.sep{min-width:12px;max-width:12px;background:transparent}
 .hud-info{font-size:.65rem;color:var(--muted);margin-left:14px;white-space:nowrap;flex-shrink:0}
+.hud-zona{font-size:.75rem;flex-shrink:0;opacity:.65;margin:0 2px}
 @keyframes hudPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+
+/* Dica tática pré-combate */
+.dica-tatica{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.dica-pip{font-size:.78rem;padding:6px 12px;border-radius:8px;text-align:left;line-height:1.4}
+.dica-pip.tip  {background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2); color:var(--accent)}
+.dica-pip.warn {background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); color:#f87171}
+.dica-pip.info {background:rgba(100,116,139,.1);border:1px solid var(--border);      color:var(--muted)}
+
+/* Comparação de peça no card de recompensa */
+.rc-swap-comp{margin-top:6px;font-size:.75rem;background:rgba(168,85,247,.06);
+  border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:8px 10px}
+.rc-swap-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.rc-swap-old{color:var(--muted);text-decoration:line-through;font-size:.72rem}
+.rc-swap-arr{color:var(--muted);flex-shrink:0}
+.rc-swap-new{font-weight:600;color:var(--text)}
+.rc-swap-diffs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.rc-sd-pos{font-size:.68rem;padding:1px 5px;border-radius:4px;background:rgba(34,197,94,.15);color:var(--accent);font-weight:700}
+.rc-sd-neg{font-size:.68rem;padding:1px 5px;border-radius:4px;background:rgba(239,68,68,.15);color:#f87171;font-weight:700}
+.rc-sd-zer{font-size:.68rem;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--muted)}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 @media(max-width:680px){.cl-body{flex-direction:column}.p-prev{width:100%;border-top:1px solid var(--border)}.p-pecas{max-height:50vh}}
@@ -432,6 +502,8 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 
     <div id="rl-slots" class="draft-grid"></div>
 
+    <div id="rl-combo-hints" class="draft-combo-hints"></div>
+
     <div class="draft-footer">
       <div class="draft-fp-emojis" id="rl-emoji">❓</div>
       <div class="draft-fp-nome" id="rl-nome">Monstro Sem Nome</div>
@@ -458,7 +530,8 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
       <div class="vs-sep">VS</div>
       <div class="mvc enemy" id="pre-ini"></div>
     </div>
-    <p class="info" style="margin-top:12px">Batalha começando...</p>
+    <div id="pre-dicas" class="dica-tatica"></div>
+    <p class="info" style="margin-top:8px">Batalha começando...</p>
   </div>
 </div>
 
@@ -502,11 +575,16 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 
 <!-- RECOMPENSA RL -->
 <div id="t-recomp" class="tela">
-  <div class="card">
+  <div class="card wide">
     <div class="ban-ok">✅ Vitória!</div>
     <h2>🎁 Escolha sua Recompensa</h2>
     <p class="info" id="rc-info"></p>
-    <div id="rc-opcoes" class="rc-grid"></div>
+    <div class="rc-layout">
+      <div id="rc-monster-panel" class="rc-monster-panel"></div>
+      <div class="rc-right">
+        <div id="rc-opcoes" class="rc-grid"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -559,27 +637,27 @@ button:disabled{background:#1e2d40;color:var(--muted);cursor:not-allowed}
 const BASE={hp:50,atk:0,def:0,spd:0};
 const PECAS={
   cabeca_dragao:    {id:"cabeca_dragao",    slot:"cabeca",  nome:"Cabeça de Dragão",   emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:5, atk:15,def:0, spd:5 },descricao:"Sopro de fogo devastador."},
-  cabeca_lobo:      {id:"cabeca_lobo",      slot:"cabeca",  nome:"Cabeça de Lobo",     emoji:"🐺",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:0, spd:10},descricao:"Uivo paralisante."},
-  cabeca_cobra:     {id:"cabeca_cobra",     slot:"cabeca",  nome:"Cabeça de Cobra",    emoji:"🐍",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:0, spd:12},descricao:"Presas venenosas."},
-  cabeca_aguia:     {id:"cabeca_aguia",     slot:"cabeca",  nome:"Cabeça de Águia",    emoji:"🦅",raridade:"comum",   tipo:null,     stats:{hp:0, atk:5, def:5, spd:15},descricao:"Visão aguçada."},
-  cabeca_demonio:   {id:"cabeca_demonio",   slot:"cabeca",  nome:"Cabeça de Demônio",  emoji:"😈",raridade:"rara",    tipo:"sombra", stats:{hp:0, atk:20,def:0, spd:8 },descricao:"Terror absoluto."},
-  cabeca_fenix:     {id:"cabeca_fenix",     slot:"cabeca",  nome:"Cabeça de Fênix",    emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:15,atk:12,def:5, spd:8 },descricao:"Renascida das chamas."},
-  corpo_ogro:       {id:"corpo_ogro",       slot:"corpo",   nome:"Corpo de Ogro",      emoji:"👹",raridade:"comum",   tipo:null,     stats:{hp:20,atk:0, def:5, spd:0 },descricao:"Massa muscular brutal."},
-  corpo_cavaleiro:  {id:"corpo_cavaleiro",  slot:"corpo",   nome:"Corpo de Cavaleiro", emoji:"⚔️",raridade:"comum",   tipo:"luz",    stats:{hp:10,atk:5, def:10,spd:0 },descricao:"Armadura impenetrável."},
-  corpo_aranha:     {id:"corpo_aranha",     slot:"corpo",   nome:"Corpo de Aranha",    emoji:"🕷️",raridade:"comum",   tipo:"veneno", stats:{hp:5, atk:5, def:3, spd:8 },descricao:"Ágil e mortal."},
-  corpo_troll:      {id:"corpo_troll",      slot:"corpo",   nome:"Corpo de Troll",     emoji:"🧌",raridade:"rara",    tipo:null,     stats:{hp:35,atk:0, def:8, spd:-5},descricao:"Regeneração sobrenatural.",efeito:"regeneracao"},
-  corpo_demonio:    {id:"corpo_demonio",    slot:"corpo",   nome:"Corpo de Demônio",   emoji:"🔱",raridade:"rara",    tipo:"sombra", stats:{hp:15,atk:10,def:5, spd:0 },descricao:"Poder das trevas."},
-  corpo_leviata:    {id:"corpo_leviata",    slot:"corpo",   nome:"Corpo de Leviatã",   emoji:"🌊",raridade:"lendaria",tipo:null,     stats:{hp:40,atk:0, def:10,spd:0 },descricao:"Resistência colossal."},
-  membros_garras:   {id:"membros_garras",   slot:"membros", nome:"Garras",             emoji:"🦴",raridade:"comum",   tipo:null,     stats:{hp:0, atk:12,def:0, spd:0 },descricao:"Laceram qualquer armadura."},
-  membros_tentaculos:{id:"membros_tentaculos",slot:"membros",nome:"Tentáculos",        emoji:"🐙",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:3, spd:0 },descricao:"Imobilizam e envenenam."},
-  membros_bracos:   {id:"membros_bracos",   slot:"membros", nome:"Braços Gigantes",    emoji:"💪",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:5, spd:0 },descricao:"Smash irresistível."},
-  membros_laminas:  {id:"membros_laminas",  slot:"membros", nome:"Lâminas Afiadas",    emoji:"🗡️",raridade:"rara",    tipo:null,     stats:{hp:-5,atk:18,def:0, spd:5 },descricao:"Cortam o vento."},
-  membros_garras_dragao:{id:"membros_garras_dragao",slot:"membros",nome:"Garras de Dragão",emoji:"🐲",raridade:"rara",tipo:"fogo",  stats:{hp:0, atk:20,def:0, spd:0 },descricao:"Incineram o que tocam."},
-  asas_nenhuma:     {id:"asas_nenhuma",     slot:"asas",    nome:"Sem Asas",           emoji:"—", raridade:"comum",   tipo:null,     stats:{hp:0, atk:0, def:0, spd:0 },descricao:"Fica no chão."},
-  asas_morcego:     {id:"asas_morcego",     slot:"asas",    nome:"Asas de Morcego",    emoji:"🦇",raridade:"comum",   tipo:"sombra", stats:{hp:0, atk:0, def:0, spd:10},descricao:"Rápido como a noite."},
-  asas_anjo:        {id:"asas_anjo",        slot:"asas",    nome:"Asas de Anjo",       emoji:"👼",raridade:"comum",   tipo:"luz",    stats:{hp:15,atk:0, def:5, spd:0 },descricao:"Proteção divina."},
-  asas_dragao:      {id:"asas_dragao",      slot:"asas",    nome:"Asas de Dragão",     emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:0, atk:5, def:0, spd:8 },descricao:"Voam e cospem fogo."},
-  asas_fenix:       {id:"asas_fenix",       slot:"asas",    nome:"Asas de Fênix",      emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:20,atk:0, def:0, spd:5 },descricao:"Ressuscita uma vez.",efeito:"ressurreicao"},
+  cabeca_lobo:      {id:"cabeca_lobo",      slot:"cabeca",  nome:"Cabeça de Lobo",     emoji:"🐺",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:0, spd:10},descricao:"+10 ATQ e +10 VEL. Evolui para Cabeça de Demônio (+20 ATQ, +8 VEL)."},
+  cabeca_cobra:     {id:"cabeca_cobra",     slot:"cabeca",  nome:"Cabeça de Cobra",    emoji:"🐍",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:0, spd:12},descricao:"+8 ATQ e +12 VEL. Tipo Veneno: combos com peças de veneno. Evolui para Cabeça de Dragão."},
+  cabeca_aguia:     {id:"cabeca_aguia",     slot:"cabeca",  nome:"Cabeça de Águia",    emoji:"🦅",raridade:"comum",   tipo:null,     stats:{hp:0, atk:5, def:5, spd:15},descricao:"+5 ATQ, +5 DEF e +15 VEL. Mais velocidade que qualquer outra cabeça. Evolui para Cabeça de Fênix."},
+  cabeca_demonio:   {id:"cabeca_demonio",   slot:"cabeca",  nome:"Cabeça de Demônio",  emoji:"😈",raridade:"rara",    tipo:"sombra", stats:{hp:0, atk:20,def:0, spd:8 },descricao:"+20 ATQ e +8 VEL. Combo com Corpo de Demônio: +15 ATQ e fúria abaixo de 50% HP."},
+  cabeca_fenix:     {id:"cabeca_fenix",     slot:"cabeca",  nome:"Cabeça de Fênix",    emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:15,atk:12,def:5, spd:8 },descricao:"+15 HP, +12 ATQ, +5 DEF, +8 VEL. Tipo Fogo. Combo Fenix Imortal com Asas de Fênix: ressuscita uma vez."},
+  corpo_ogro:       {id:"corpo_ogro",       slot:"corpo",   nome:"Corpo de Ogro",      emoji:"👹",raridade:"comum",   tipo:null,     stats:{hp:20,atk:0, def:5, spd:0 },descricao:"+20 HP e +5 DEF. Melhor HP do slot comum. Evolui para Corpo de Troll (+35 HP, regeneração)."},
+  corpo_cavaleiro:  {id:"corpo_cavaleiro",  slot:"corpo",   nome:"Corpo de Cavaleiro", emoji:"⚔️",raridade:"comum",   tipo:"luz",    stats:{hp:10,atk:5, def:10,spd:0 },descricao:"+10 HP, +5 ATQ e +10 DEF. Maior defesa do slot comum. Evolui para Corpo de Demônio."},
+  corpo_aranha:     {id:"corpo_aranha",     slot:"corpo",   nome:"Corpo de Aranha",    emoji:"🕷️",raridade:"comum",   tipo:"veneno", stats:{hp:5, atk:5, def:3, spd:8 },descricao:"+5 HP, +5 ATQ, +3 DEF e +8 VEL. O único corpo que dá velocidade. Evolui para Corpo de Leviatã."},
+  corpo_troll:      {id:"corpo_troll",      slot:"corpo",   nome:"Corpo de Troll",     emoji:"🧌",raridade:"rara",    tipo:null,     stats:{hp:35,atk:0, def:8, spd:-5},descricao:"+35 HP e +8 DEF, mas -5 VEL. Regenera 5 HP no início de cada turno.",efeito:"regeneracao"},
+  corpo_demonio:    {id:"corpo_demonio",    slot:"corpo",   nome:"Corpo de Demônio",   emoji:"🔱",raridade:"rara",    tipo:"sombra", stats:{hp:15,atk:10,def:5, spd:0 },descricao:"+15 HP, +10 ATQ e +5 DEF. Combo Berserker Sombrio com Cabeça de Demônio: +15 ATQ e fúria abaixo de 50% HP."},
+  corpo_leviata:    {id:"corpo_leviata",    slot:"corpo",   nome:"Corpo de Leviatã",   emoji:"🌊",raridade:"lendaria",tipo:null,     stats:{hp:40,atk:0, def:10,spd:0 },descricao:"+40 HP e +10 DEF. Maior tanque do jogo. Ideal para builds de resistência extrema."},
+  membros_garras:   {id:"membros_garras",   slot:"membros", nome:"Garras",             emoji:"🦴",raridade:"comum",   tipo:null,     stats:{hp:0, atk:12,def:0, spd:0 },descricao:"+12 ATQ puro. Evolui para Garras de Dragão (+20 ATQ, tipo Fogo)."},
+  membros_tentaculos:{id:"membros_tentaculos",slot:"membros",nome:"Tentáculos",        emoji:"🐙",raridade:"comum",   tipo:"veneno", stats:{hp:0, atk:8, def:3, spd:0 },descricao:"+8 ATQ e +3 DEF. Tipo Veneno. Evolui para Lâminas Afiadas (+18 ATQ, +5 VEL, -5 HP)."},
+  membros_bracos:   {id:"membros_bracos",   slot:"membros", nome:"Braços Gigantes",    emoji:"💪",raridade:"comum",   tipo:null,     stats:{hp:5, atk:10,def:5, spd:0 },descricao:"+5 HP, +10 ATQ e +5 DEF. Mais equilibrado do slot. Evolui para Garras de Dragão (+20 ATQ)."},
+  membros_laminas:  {id:"membros_laminas",  slot:"membros", nome:"Lâminas Afiadas",    emoji:"🗡️",raridade:"rara",    tipo:null,     stats:{hp:-5,atk:18,def:0, spd:5 },descricao:"-5 HP mas +18 ATQ e +5 VEL. Alto risco, alto dano. Troca vida por agressividade."},
+  membros_garras_dragao:{id:"membros_garras_dragao",slot:"membros",nome:"Garras de Dragão",emoji:"🐲",raridade:"rara",tipo:"fogo",  stats:{hp:0, atk:20,def:0, spd:0 },descricao:"+20 ATQ. Maior ataque do slot membros. Tipo Fogo ativa combos de fogo."},
+  asas_nenhuma:     {id:"asas_nenhuma",     slot:"asas",    nome:"Sem Asas",           emoji:"—", raridade:"comum",   tipo:null,     stats:{hp:0, atk:0, def:0, spd:0 },descricao:"Sem bônus. Libera o slot asas para futura evolução ou recompensa."},
+  asas_morcego:     {id:"asas_morcego",     slot:"asas",    nome:"Asas de Morcego",    emoji:"🦇",raridade:"comum",   tipo:"sombra", stats:{hp:0, atk:0, def:0, spd:10},descricao:"+10 VEL. Tipo Sombra. Melhor velocidade do slot comum. Evolui para Asas de Dragão (+5 ATQ, +8 VEL)."},
+  asas_anjo:        {id:"asas_anjo",        slot:"asas",    nome:"Asas de Anjo",       emoji:"👼",raridade:"comum",   tipo:"luz",    stats:{hp:15,atk:0, def:5, spd:0 },descricao:"+15 HP e +5 DEF. Tipo Luz. Mais tanque do slot. Evolui para Asas de Fênix (+20 HP, ressuscita uma vez)."},
+  asas_dragao:      {id:"asas_dragao",      slot:"asas",    nome:"Asas de Dragão",     emoji:"🐉",raridade:"rara",    tipo:"fogo",   stats:{hp:0, atk:5, def:0, spd:8 },descricao:"+5 ATQ e +8 VEL. Tipo Fogo. Bom equilíbrio entre dano e velocidade."},
+  asas_fenix:       {id:"asas_fenix",       slot:"asas",    nome:"Asas de Fênix",      emoji:"🔥",raridade:"lendaria",tipo:"fogo",   stats:{hp:20,atk:0, def:0, spd:5 },descricao:"+20 HP e +5 VEL. Ressuscita uma vez com 30% de HP. Combo Fenix Imortal com Cabeça de Fênix.",efeito:"ressurreicao"},
   // ── Peças Únicas (só como recompensa de boss) ─────────────────────────────
   olho_abismo:      {id:"olho_abismo",      slot:"membros", nome:"Olho do Abismo",     emoji:"💠",raridade:"unica",   tipo:"sombra", stats:{hp:0,  atk:10,def:0, spd:5 },descricao:"Ignora 50% da defesa inimiga.",              efeito:"ignora_def",          unica:true},
   coroa_tita:       {id:"coroa_tita",       slot:"cabeca",  nome:"Coroa do Titã",      emoji:"👑",raridade:"unica",   tipo:null,     stats:{hp:60, atk:5, def:5, spd:0 },descricao:"Esmash massivo a cada 6 turnos (3× ATK).",   unica:true},
@@ -587,6 +665,25 @@ const PECAS={
 };
 const SLOTS=["cabeca","corpo","membros","asas"];
 const SLOT_L={cabeca:"🐲 Cabeça",corpo:"💀 Corpo",membros:"🦴 Membros",asas:"🦋 Asas"};
+
+// Caminhos de evolução: peça comum → peça rara/lendária tematicamente relacionada
+const EVOLUCOES={
+  // Cabeças
+  cabeca_lobo:     "cabeca_demonio",   // Lobo → Demônio (agressividade extrema)
+  cabeca_cobra:    "cabeca_dragao",    // Cobra → Dragão  (veneno → fogo, escalada de poder)
+  cabeca_aguia:    "cabeca_fenix",     // Águia → Fênix   (lendária! voo → renascimento eterno)
+  // Corpos
+  corpo_ogro:      "corpo_troll",      // Ogro → Troll    (tanque → tanque com regeneração)
+  corpo_cavaleiro: "corpo_demonio",    // Cavaleiro → Demônio (luz → sombra, mais ataque)
+  corpo_aranha:    "corpo_leviata",    // Aranha → Leviatã (lendária! pequeno → colossal)
+  // Membros
+  membros_garras:  "membros_garras_dragao", // Garras → Garras de Dragão (direto upgrade)
+  membros_tentaculos:"membros_laminas",     // Tentáculos → Lâminas (controle → velocidade)
+  membros_bracos:  "membros_garras_dragao", // Braços → Garras de Dragão (força → precisão)
+  // Asas
+  asas_morcego:    "asas_dragao",      // Morcego → Dragão (velocidade → fogo+velocidade)
+  asas_anjo:       "asas_fenix",       // Anjo → Fênix    (lendária! proteção → ressurreição)
+};
 
 const COMBOS=[
   {id:"dragao_puro",  nome:"Dragão Puro",      emoji:"🔥🐉",requer:["cabeca_dragao","membros_garras_dragao","asas_dragao"],    min:3,bonus:{hp:50,atk:20,def:0,spd:0},efeitos:["fogo_persistente"]},
@@ -599,11 +696,11 @@ const COMBOS=[
 ];
 
 const RELIQUIAS=[
-  {id:"coracao_fenix",   nome:"Coração de Fênix",   emoji:"🔥",desc:"Ressuscita uma vez.",       ef:"ressurreicao"},
-  {id:"sangue_dragao",   nome:"Sangue de Dragão",   emoji:"🐉",desc:"Ataques causam fogo.",      ef:"fogo_persistente"},
-  {id:"veneno_ancestral",nome:"Veneno Ancestral",   emoji:"🐍",desc:"Ataques sempre envenenam.", ef:"veneno_permanente"},
-  {id:"furia_berserker", nome:"Fúria Berserker",    emoji:"💢",desc:"<50% HP: +50% ataque.",     ef:"berserk"},
-  {id:"cura_troll",      nome:"Cura do Troll",      emoji:"🧌",desc:"Regenera 5 HP/turno.",      ef:"regeneracao"},
+  {id:"coracao_fenix",   nome:"Coração de Fênix",   emoji:"🔥",desc:"Ao chegar em 0 HP, ressuscita uma vez com 50% da vida máxima.",     ef:"ressurreicao"},
+  {id:"sangue_dragao",   nome:"Sangue de Dragão",   emoji:"🐉",desc:"Cada ataque aplica fogo: 3 de dano extra por turno por 3 turnos.",   ef:"fogo_persistente"},
+  {id:"veneno_ancestral",nome:"Veneno Ancestral",   emoji:"🐍",desc:"Todo ataque envenena o inimigo: 3 de dano por turno, cumulativo.",   ef:"veneno_permanente"},
+  {id:"furia_berserker", nome:"Fúria Berserker",    emoji:"💢",desc:"Abaixo de 50% HP, ganha +50% de ataque enquanto durar o combate.",   ef:"berserk"},
+  {id:"cura_troll",      nome:"Cura do Troll",      emoji:"🧌",desc:"Recupera 5 HP no início de cada turno, independente de dano sofrido.",ef:"regeneracao"},
 ];
 
 // Traits: bônus passivos por número de peças da mesma facção
@@ -766,7 +863,7 @@ function batalhar(mA,mB){
       let atkEf=at.atk;
       if(at.atkBuff&&at.atkBuff.turns>0){atkEf=Math.floor(atkEf*at.atkBuff.mult);at.atkBuff.turns--}
 
-      let d=Math.max(1,atkEf-Math.floor(df.def*.5))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
+      let d=Math.max(1,atkEf-Math.floor(df.def*.75))+(Math.floor(Math.random()*5)-2);d=Math.max(1,d);
       if(hasEf(at,"berserk")&&at.hp<at.maxHp*.5){d=Math.floor(d*1.5);log.push({t:"berserk",nome:at.nome})}
 
       // ── Sopro de Fogo: dano dobrado ──
@@ -775,8 +872,8 @@ function batalhar(mA,mB){
       // ── Esmagar: 3× ATK ──
       if(at.proxEsmagar){at.proxEsmagar=false;d=Math.floor(at.atk*3);log.push({t:"esmagar",nome:at.nome,d})}
 
-      // ── Ignora Defesa: usa 25% em vez de 50% ──
-      if(hasEf(at,"ignora_def")){const base=Math.max(1,atkEf-Math.floor(df.def*.25))+(Math.floor(Math.random()*5)-2);d=Math.max(1,base)}
+      // ── Ignora Defesa: usa 37.5% em vez de 75% ──
+      if(hasEf(at,"ignora_def")){const base=Math.max(1,atkEf-Math.floor(df.def*.375))+(Math.floor(Math.random()*5)-2);d=Math.max(1,base)}
 
       // ── Esquiva automática (Asas Tempestade — primeiro turno) ──
       if(df.esquivaPrimeiro){df.esquivaPrimeiro=false;log.push({t:"esquiva_primeiro",nome:df.nome});continue}
@@ -800,8 +897,14 @@ function batalhar(mA,mB){
       // ── Fogo (respeita imunidade) ──
       if(hasEf(at,"fogo_persistente")&&!hasEf(df,"imune_fogo")){if(Math.random()<.4){adDot(df,{t:"fogo",turns:2,d:6});log.push({t:"queima",nome:df.nome})}}
 
-      // ── DoTs ──
-      df.dots.forEach(dot=>{if(dot.turns<=0)return;df.hp-=dot.d;dot.turns--;log.push({t:"dot",ef:dot.t,nome:df.nome,d:dot.d,hp:Math.max(0,df.hp)})});
+      // ── DoTs (DEF absorve 20% do dano de veneno/fogo) ──
+      df.dots.forEach(dot=>{
+        if(dot.turns<=0)return;
+        const absorb=Math.floor(df.def*.2);
+        const dReal=Math.max(1,dot.d-absorb);
+        df.hp-=dReal;dot.turns--;
+        log.push({t:"dot",ef:dot.t,nome:df.nome,d:dReal,hp:Math.max(0,df.hp)});
+      });
       df.dots=df.dots.filter(x=>x.turns>0);
 
       if(df.hp<=0){
@@ -890,11 +993,14 @@ function rlGerarInimigo(rodada){
   const isBoss=rodada%3===0;const zi=Math.min(Math.floor((rodada-1)/3),2);
   // Ajuste 1: escala reduzida de 13% → 8% por rodada
   // Ajuste 2: boss sem multiplicador duplo (apenas +20% flat)
-  const mult=1+(rodada-1)*0.08;
-  const bm=isBoss?1.2:1;
+  // Rodadas 1-9: linear suave (+8%/rodada). Endless (10+): exponencial crescente.
+  const multBase=1+(Math.min(rodada,9)-1)*0.08;
+  const multEndless=rodada>9?Math.pow(1.18,rodada-9):1;
+  const mult=multBase*multEndless;
+  const bm=isBoss?1.3:1;
   let nome,ids;
   let bossRef=null;
-  if(isBoss){bossRef=BOSSES[Math.floor(rodada/3)-1];nome=bossRef.nome+"  👑";ids=bossRef.pecas}
+  if(isBoss){bossRef=BOSSES[(Math.floor(rodada/3)-1)%BOSSES.length];nome=bossRef.nome+"  👑";ids=bossRef.pecas}
   else{
     ids=SLOTS.map(sl=>{const pool=Object.values(PECAS).filter(p=>p.slot===sl&&ZONAS[zi].rar.includes(p.raridade)&&!p.unica);return pool[Math.floor(Math.random()*pool.length)].id});
     nome=gerarNomeInimigo(ids,zi);
@@ -917,27 +1023,64 @@ function rlGerarRecomp(rodada,monster){
   const vDEF=Math.floor((6+r*1.5)*bonus);
   const vSPD=Math.floor((5+r*1.2)*bonus);
   const pool=[];
-  pool.push({tipo:"stat_boost",stat:"hp", valor:vHP, emoji:"❤️",label:`+${vHP} Vida Máxima`});
-  pool.push({tipo:"stat_boost",stat:"atk",valor:vATK,emoji:"⚔️",label:`+${vATK} Ataque`});
-  pool.push({tipo:"stat_boost",stat:"def",valor:vDEF,emoji:"🛡️",label:`+${vDEF} Defesa`});
-  pool.push({tipo:"stat_boost",stat:"spd",valor:vSPD,emoji:"⚡",label:`+${vSPD} Velocidade`});
-  if(r>=2)pool.push({tipo:"full_heal",emoji:"💊",label:"+40 Vida"});
+  const s=monster.stats;
+  pool.push({tipo:"stat_boost",stat:"hp", valor:vHP, emoji:"❤️",label:`+${vHP} Vida Máxima`,   ctx:`${s.hp} → ${s.hp+vHP} (começa a próxima batalha com este HP)`});
+  pool.push({tipo:"stat_boost",stat:"atk",valor:vATK,emoji:"⚔️",label:`+${vATK} Ataque`,       ctx:`${s.atk} → ${s.atk+vATK}`});
+  pool.push({tipo:"stat_boost",stat:"def",valor:vDEF,emoji:"🛡️",label:`+${vDEF} Defesa`,       ctx:`${s.def} → ${s.def+vDEF}`});
+  pool.push({tipo:"stat_boost",stat:"spd",valor:vSPD,emoji:"⚡",label:`+${vSPD} Velocidade`,   ctx:`${s.spd} → ${s.spd+vSPD}`});
   const sl=SLOTS[Math.floor(Math.random()*SLOTS.length)];
   const rp=Object.values(PECAS).filter(p=>p.slot===sl&&(p.raridade==="rara"||p.raridade==="lendaria"));
-  if(rp.length){const np=rp[Math.floor(Math.random()*rp.length)];pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,peca:np})}
-  if(r>=2&&monster.reliquias.length<3){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:`${rl.nome} (${monster.reliquias.length+1}/3)`,desc:rl.desc,reliquia:rl})}}
+  if(rp.length){
+    const np=rp[Math.floor(Math.random()*rp.length)];
+    const vel=PECAS[monster.pecas[sl]];
+    const dAtk=(np.stats.atk-(vel?vel.stats.atk:0));
+    const dHp=(np.stats.hp-(vel?vel.stats.hp:0));
+    const diffs=[dHp!==0?`${dHp>0?"+":""}${dHp} HP`:"",dAtk!==0?`${dAtk>0?"+":""}${dAtk} ATK`:""].filter(Boolean).join(" / ")||"Mesmos stats";
+    pool.push({tipo:"peca_swap",slot:sl,emoji:np.emoji,label:`Nova ${sl}: ${np.nome}`,desc:np.descricao,ctx:diffs,peca:np})
+  }
+  if(r>=2&&monster.reliquias.length<3){const disp=RELIQUIAS.filter(rl=>!monster.reliquias.includes(rl.id));if(disp.length){const rl=disp[Math.floor(Math.random()*disp.length)];pool.push({tipo:"reliquia",emoji:rl.emoji,label:rl.nome,desc:rl.desc,ctx:`Relíquia ${monster.reliquias.length+1}/3`,reliquia:rl})}}
   // Peça Única — só em rounds de boss
   if(r%3===0){
     const unicas=Object.values(PECAS).filter(p=>p.unica&&!Object.values(monster.pecas).includes(p.id));
     if(unicas.length){const u=unicas[Math.floor(Math.random()*unicas.length)];
-      pool.push({tipo:"peca_swap",slot:u.slot,emoji:u.emoji,label:`✨ ÚNICA: ${u.nome}`,desc:u.descricao,peca:u,unica:true})}
+      const vel=PECAS[monster.pecas[u.slot]];
+      const dAtk=(u.stats.atk-(vel?vel.stats.atk:0));const dHp=(u.stats.hp-(vel?vel.stats.hp:0));
+      const diffs=[dHp!==0?`${dHp>0?"+":""}${dHp} HP`:"",dAtk!==0?`${dAtk>0?"+":""}${dAtk} ATK`:""].filter(Boolean).join(" / ")||"Efeito especial";
+      pool.push({tipo:"peca_swap",slot:u.slot,emoji:u.emoji,label:`✨ ÚNICA: ${u.nome}`,desc:u.descricao,ctx:diffs,peca:u,unica:true})}
   }
-  return pool.sort(()=>Math.random()-.5).slice(0,3);
+
+  // Evolução — slot GARANTIDO: sempre aparece como 3ª opção se disponível
+  let evolucaoOpc=null;
+  if(r>=2){
+    const evSlots=SLOTS.filter(sl=>{
+      const atualId=monster.pecas[sl];
+      return atualId&&EVOLUCOES[atualId]&&!Object.values(monster.pecas).includes(EVOLUCOES[atualId]);
+    });
+    if(evSlots.length){
+      const slot=evSlots[Math.floor(Math.random()*evSlots.length)];
+      const velha=PECAS[monster.pecas[slot]];
+      const nova=PECAS[EVOLUCOES[monster.pecas[slot]]];
+      if(velha&&nova){
+        const SLBL={hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"};
+        const diffs=["hp","atk","def","spd"].map(k=>{
+          const d=(nova.stats[k]||0)-(velha.stats[k]||0);
+          if(d===0)return"";
+          return`${SLBL[k]}${d>0?"+":""}${d}`;
+        }).filter(Boolean).join(" ");
+        evolucaoOpc={tipo:"evolucao",slot,emoji:nova.emoji,
+          label:`⬆️ Evoluir: ${velha.nome} → ${nova.nome}`,
+          ctx:diffs||"Mesmos stats base",desc:nova.descricao,
+          pecaVelha:velha,pecaNova:nova,isLend:nova.raridade==="lendaria"};
+      }
+    }
+  }
+  // Monta: 2 opções aleatórias + evolução garantida no fim (ou 3 aleatórias se não tiver evolução)
+  const basePool=pool.sort(()=>Math.random()-.5).slice(0,evolucaoOpc?2:3);
+  return evolucaoOpc?[...basePool,evolucaoOpc]:basePool;
 }
 function rlAplicarRecomp(monster,r){
   const s=monster.stats;
   if(r.tipo==="stat_boost")s[r.stat]+=r.valor;
-  else if(r.tipo==="full_heal")s.hp+=30;
   else if(r.tipo==="peca_swap"){
     const v=PECAS[monster.pecas[r.slot]],n=r.peca;
     if(v){s.hp-=v.stats.hp;s.atk-=v.stats.atk;s.def-=v.stats.def;s.spd-=v.stats.spd}
@@ -946,6 +1089,14 @@ function rlAplicarRecomp(monster,r){
   }else if(r.tipo==="reliquia"){
     monster.reliquias.push(r.reliquia.id);
     if(r.reliquia.ef&&!monster.efeitos.includes(r.reliquia.ef))monster.efeitos.push(r.reliquia.ef);
+  }else if(r.tipo==="evolucao"){
+    const v=r.pecaVelha,n=r.pecaNova;
+    if(v){s.hp-=v.stats.hp;s.atk-=v.stats.atk;s.def-=v.stats.def;s.spd-=v.stats.spd}
+    if(n){s.hp+=n.stats.hp;s.atk+=n.stats.atk;s.def+=n.stats.def;s.spd+=n.stats.spd}
+    s.hp=Math.max(10,s.hp);s.atk=Math.max(1,s.atk);
+    monster.pecas[r.slot]=n.id;
+    // Aplica efeito passivo da peça evoluída se tiver
+    if(n.efeito&&!monster.efeitos.includes(n.efeito))monster.efeitos.push(n.efeito);
   }
 }
 
@@ -1036,16 +1187,26 @@ function atualizarHUD(){
   inner.innerHTML="";
   const atual=RUN.rodada;
   const total=9;
+  // Grupos de 3 por zona: [1-3]=Floresta, [4-6]=Pântano, [7-9]=Vulcão
+  const zonaEmoji=["🌲","🌿","🌋"];
   for(let i=1;i<=total;i++){
     const isBoss=i%3===0;
     const feito=i<atual;
     const isAtual=i===atual;
-    // Linha antes
-    if(i>1){const l=document.createElement("div");l.className="hud-linha"+(feito||isAtual?" feita":"");inner.appendChild(l)}
+    // Separador de zona + emoji antes do início de cada grupo
+    if(i===1||i===4||i===7){
+      if(i>1){const sep=document.createElement("div");sep.className="hud-linha sep";inner.appendChild(sep)}
+      const ze=document.createElement("div");ze.className="hud-zona";
+      ze.textContent=zonaEmoji[Math.floor((i-1)/3)];
+      ze.title=ZONAS[Math.floor((i-1)/3)].nome;
+      inner.appendChild(ze);
+    }
+    // Linha entre dots dentro do mesmo grupo
+    if(i>1&&!([4,7].includes(i))){const l=document.createElement("div");l.className="hud-linha"+(feito||isAtual?" feita":"");inner.appendChild(l)}
     const dot=document.createElement("div");
     if(isBoss){dot.className=feito?"hud-dot boss-f":isAtual?"hud-dot boss-a":"hud-dot boss-p";dot.textContent="👑"}
     else{dot.className=feito?"hud-dot feito":isAtual?"hud-dot atual":"hud-dot pendente";dot.textContent=i}
-    dot.title=isBoss?`Rodada ${i} — BOSS`:`Rodada ${i}`;
+    dot.title=isBoss?`Rodada ${i} — BOSS (${ZONAS[Math.floor((i-1)/3)].nome})`:`Rodada ${i} — ${ZONAS[Math.floor((i-1)/3)].nome}`;
     inner.appendChild(dot);
   }
   // Endless
@@ -1349,6 +1510,61 @@ function rlAtuPreview(){
   let extra=el("rl-extra");
   if(!extra){extra=document.createElement("div");extra.id="rl-extra";el("rl-btn-ok").parentNode.insertBefore(extra,el("rl-btn-ok"))}
   extra.innerHTML=traitHtml+relHtml;
+
+  // ── Combo Hints ────────────────────────────────────────────────────────────
+  const hintsEl=el("rl-combo-hints");
+  if(hintsEl&&rlCat){
+    // Conjunto de todas as peças disponíveis no draft atual (para marcar ✓)
+    const disponiveis=new Set(Object.values(rlCat).flatMap(arr=>arr.map(p=>p.id)));
+    const selSet=new Set(Object.values(rlSel).filter(Boolean));
+
+    const items=COMBOS.map(c=>{
+      const match=c.requer.filter(id=>selSet.has(id)).length;
+      if(match===0)return null; // não mostra combos sem nenhuma peça selecionada
+      const ativo=match>=c.min;
+      const faltam=c.requer.filter(id=>!selSet.has(id));
+      return{c,match,ativo,faltam};
+    }).filter(Boolean);
+
+    if(items.length===0){hintsEl.innerHTML="";return}
+
+    hintsEl.innerHTML=items.map(({c,match,ativo,faltam})=>{
+      const cls=ativo?"ativo":match===c.min-1?"quase":"longe";
+      // Barras de progresso
+      const pips=c.requer.map((_,i)=>
+        `<div class="ch-pip${i<match?" on":""}"></div>`
+      ).join("");
+      // Bônus resumido
+      const bparts=[];
+      if(c.bonus.hp>0)bparts.push(`+${c.bonus.hp} HP`);
+      if(c.bonus.atk>0)bparts.push(`+${c.bonus.atk} ATK`);
+      if(c.bonus.def>0)bparts.push(`+${c.bonus.def} DEF`);
+      if(c.bonus.spd>0)bparts.push(`+${c.bonus.spd} SPD`);
+      const bonusHtml=ativo||cls==="quase"
+        ?`<span class="ch-bonus">${bparts.join(" ")}</span>`:""
+
+      // Peças que faltam — marca ✓ se disponível no draft
+      let faltaHtml="";
+      if(!ativo&&faltam.length>0){
+        const partes=faltam.map(id=>{
+          const p=PECAS[id];if(!p)return"";
+          const disp=disponiveis.has(id);
+          return disp
+            ?`<span class="disponivel">${p.emoji} ${p.nome} ✓</span>`
+            :`<span>${p.emoji} ${p.nome}</span>`;
+        }).join(", ");
+        faltaHtml=`<span class="ch-falta"> — falta: ${partes}</span>`;
+      }
+
+      return`<div class="ch-item ${cls}">
+        <span class="ch-emoji">${c.emoji}</span>
+        <div class="ch-bar">${pips}</div>
+        <span class="ch-nome">${c.nome}</span>
+        ${faltaHtml}
+        ${bonusHtml}
+      </div>`;
+    }).join("");
+  }
 }
 el("rl-inp-mn").addEventListener("input",rlAtuPreview);
 el("rl-btn-ok").addEventListener("click",()=>{
@@ -1359,6 +1575,47 @@ el("rl-btn-ok").addEventListener("click",()=>{
   RUN.monster=buildMonster(nome,sel,"jogador",RUN.nome,rels);
   RUN.rodada++;rlPreCombate();
 });
+
+function gerarDicasTaticas(meu, ini){
+  const dicas=[];
+  const ms=meu.stats, is=ini.stats;
+  const mEf=meu.efeitos||[], iEf=ini.efeitos||[];
+
+  // Velocidade — quem ataca primeiro
+  const dSpd=ms.spd-is.spd;
+  if(dSpd>=10)dicas.push({tipo:"tip",txt:`⚡ Você é muito mais rápido (${ms.spd} vs ${is.spd}) — vai atacar primeiro na maioria dos turnos.`});
+  else if(dSpd<=-10)dicas.push({tipo:"warn",txt:`⚡ Inimigo mais rápido (${is.spd} vs ${ms.spd}) — ele ataca antes de você.`});
+
+  // Defesa vs Ataque inimigo — dano bruto esperado
+  const danoEsp=Math.max(1,is.atk-ms.def);
+  if(ms.def>=is.atk*0.5)dicas.push({tipo:"tip",txt:`🛡️ Sua defesa (${ms.def}) absorve boa parte do ataque inimigo (${is.atk}) — você aguenta bem.`});
+  else if(danoEsp>=ms.hp*0.4)dicas.push({tipo:"warn",txt:`💥 Ataque inimigo (${is.atk}) é alto para sua defesa (${ms.def}) — ~${danoEsp} de dano por turno esperado.`});
+
+  // Efeitos perigosos do inimigo
+  if(iEf.includes("fogo_persistente"))dicas.push({tipo:"warn",txt:`🔥 Ele tem fogo persistente — causa dano extra por turno além do ataque normal.`});
+  if(iEf.includes("veneno_permanente")||iEf.includes("veneno_potente"))dicas.push({tipo:"warn",txt:`🐍 Ele envenena a cada ataque — o dano vai acumulando ao longo da batalha.`});
+  if(iEf.includes("berserk"))dicas.push({tipo:"warn",txt:`💢 Fúria Berserker — abaixo de 50% HP ele fica muito mais perigoso.`});
+  if(iEf.includes("ressurreicao"))dicas.push({tipo:"warn",txt:`🔥 Ele pode ressuscitar uma vez — prepare-se para uma batalha longa.`});
+  if(iEf.includes("armadura"))dicas.push({tipo:"warn",txt:`🛡️ Boss com Armadura — parte do seu dano será bloqueada.`});
+
+  // Vantagens suas
+  if(mEf.includes("regeneracao"))dicas.push({tipo:"tip",txt:`🧌 Sua regeneração recupera HP a cada turno — batalhas longas favorecem você.`});
+  if(mEf.includes("berserk"))dicas.push({tipo:"tip",txt:`💢 Sua Fúria Berserker vai disparar quando você tiver <50% HP — aguente firme.`});
+  if(mEf.includes("ressurreicao"))dicas.push({tipo:"tip",txt:`🔥 Você pode ressuscitar uma vez — use isso a seu favor nos momentos críticos.`});
+  if(mEf.includes("esquiva_primeiro"))dicas.push({tipo:"tip",txt:`⚡ Você esquiva automaticamente do primeiro ataque — bom começo garantido.`});
+  if(mEf.includes("ignora_def"))dicas.push({tipo:"tip",txt:`💠 Seu Olho do Abismo ignora 50% da defesa inimiga — muito eficaz contra tanques.`});
+
+  // HP total comparativo
+  if(ms.hp>=is.hp*1.4)dicas.push({tipo:"tip",txt:`❤️ Você tem muito mais HP (${ms.hp} vs ${is.hp}) — luta de desgaste favorece você.`});
+  else if(is.hp>=ms.hp*1.4)dicas.push({tipo:"info",txt:`❤️ Inimigo com HP alto (${is.hp} vs ${ms.hp}) — batalha pode ser demorada.`});
+
+  // Boss
+  if(ini.isBoss)dicas.push({tipo:"info",txt:`👑 Boss — tem bônus de stats e habilidades especiais. Tudo que você conquistou importa aqui.`});
+
+  // Retorna no máximo 3 dicas, priorizando warn > tip > info
+  const ord=["warn","tip","info"];
+  return dicas.sort((a,b)=>ord.indexOf(a.tipo)-ord.indexOf(b.tipo)).slice(0,3);
+}
 
 function rlPreCombate(){
   // Aplica bônus pendente do Treino Prolongado
@@ -1381,6 +1638,12 @@ function rlPreCombate(){
   el("pre-meu").innerHTML=renderMVC(RUN.monster,rlCat);
   el("pre-ini").innerHTML=renderMVC(inimigoAtual,rlCat);
   el("pre-ini").className="mvc enemy"+(isBoss?" boss":"");
+  // Dicas táticas
+  const dicasEl=el("pre-dicas");
+  if(dicasEl){
+    const dicas=gerarDicasTaticas(RUN.monster,inimigoAtual);
+    dicasEl.innerHTML=dicas.map(d=>`<div class="dica-pip ${d.tipo}">${d.txt}</div>`).join("");
+  }
   mostrar("t-pre");
   setTimeout(()=>{
     const res=batalhar(RUN.monster,inimigoAtual);
@@ -1433,17 +1696,78 @@ function _rlRecompImpl(recompensasRestantes){
   const recomp=rlGerarRecomp(RUN.rodada,RUN.monster);
   const grid=el("rc-opcoes");grid.innerHTML="";
 
-  // Painel de preview (criado uma vez, reutilizado)
+  // Painel de preview (criado uma vez, reutilizado dentro do .rc-right)
   let previewDiv=el("rc-preview");
   if(!previewDiv){
     previewDiv=document.createElement("div");previewDiv.id="rc-preview";
-    el("t-recomp").querySelector(".card").appendChild(previewDiv);
+    el("rc-opcoes").parentNode.appendChild(previewDiv);
   }
   previewDiv.innerHTML="";previewDiv.style.display="none";
 
+  // Preenche mini-card do monster atual
+  const mp=el("rc-monster-panel");
+  if(mp){
+    const m=RUN.monster;
+    const rels=m.reliquias.map(id=>{const r=RELIQUIAS.find(x=>x.id===id);return r?`<span class="rc-mp-rel">${r.emoji} ${r.nome}</span>`:""}).join("");
+    mp.innerHTML=`
+      <div class="rc-mp-title">Seu Monstro</div>
+      <div style="font-size:1.5rem;margin-bottom:6px">${Object.values(m.pecas).filter(id=>id&&id!=="asas_nenhuma").map(id=>PECAS[id]?.emoji||"").join("")}</div>
+      <div class="rc-mp-nome">${m.nome}</div>
+      <div class="rc-mp-stat"><span>❤️ Vida (max)</span><span>${m.stats.hp}</span></div>
+      <div class="rc-mp-stat"><span>⚔️ Ataque</span><span>${m.stats.atk}</span></div>
+      <div class="rc-mp-stat"><span>🛡️ Defesa</span><span>${m.stats.def}</span></div>
+      <div class="rc-mp-stat"><span>⚡ Velocidade</span><span>${m.stats.spd}</span></div>
+      ${rels?`<div class="rc-mp-rels">${rels}</div>`:`<div class="rc-mp-empty">Sem relíquias</div>`}`;
+  }
+
   recomp.forEach(r=>{
-    const card=document.createElement("div");card.className=`rc ${r.tipo}`;
-    card.innerHTML=`<span class="rc-e">${r.emoji}</span><div><div class="rc-l">${r.label}</div>${r.desc?`<div class="rc-d">${r.desc}</div>`:""}</div>`;
+    const card=document.createElement("div");card.className=`rc ${r.tipo}${r.unica?" unica-tag":""}`;
+    let extraHtml="";
+    if(r.tipo==="evolucao"&&r.pecaVelha&&r.pecaNova){
+      const v=r.pecaVelha,n=r.pecaNova;
+      const SLBL={hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"};
+      const diffs=["hp","atk","def","spd"].map(k=>{
+        const d=(n.stats[k]||0)-(v.stats[k]||0);if(d===0)return"";
+        const cl=d>0?"rc-sd-pos":"rc-sd-neg";
+        return`<span class="${cl}">${SLBL[k]}${d>0?"+":""}${d}</span>`;
+      }).filter(Boolean).join("");
+      const badge=r.isLend
+        ?`<span class="rc-evo-badge rc-evo-lendaria">⭐ LENDÁRIA</span>`
+        :`<span class="rc-evo-badge">⬆️ EVOLUÇÃO</span>`;
+      const efHtml=n.efeito||n.descricao?`<div class="rc-d" style="margin-top:4px">✨ ${n.descricao}</div>`:"";
+      extraHtml=`<div class="rc-swap-comp" style="border-color:rgba(251,191,36,.25)">
+        <div style="margin-bottom:4px">${badge}</div>
+        <div class="rc-swap-row">
+          <span class="rc-swap-old">${v.emoji} ${v.nome} <small style="color:var(--muted)">(${v.raridade})</small></span>
+          <span class="rc-swap-arr">→</span>
+          <span class="rc-swap-new" style="color:#fbbf24">${n.emoji} ${n.nome} <small style="color:var(--muted)">(${n.raridade})</small></span>
+        </div>
+        ${diffs?`<div class="rc-swap-diffs">${diffs}</div>`:""}
+      </div>${efHtml}`;
+    }
+    if(r.tipo==="peca_swap"&&r.peca){
+      const vel=PECAS[RUN.monster.pecas[r.slot]];
+      const nov=r.peca;
+      const SLBL={hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"};
+      const diffs=["hp","atk","def","spd"].map(k=>{
+        const d=(nov.stats[k]||0)-(vel?vel.stats[k]||0:0);
+        if(d===0)return"";
+        const cl=d>0?"rc-sd-pos":"rc-sd-neg";
+        return`<span class="${cl}">${SLBL[k]}${d>0?"+":""}${d}</span>`;
+      }).filter(Boolean).join("");
+      // Efeito especial da nova peça (passivo, efeito ou unica)
+      const efeitoDesc = nov.descricao&&(nov.efeito||nov.unica) ? `<div class="rc-d" style="margin-top:5px">✨ ${nov.descricao}</div>` : "";
+      extraHtml=`<div class="rc-swap-comp">
+        <div class="rc-swap-row">
+          <span class="rc-swap-old">${vel?vel.emoji+" "+vel.nome:"(vazio)"}</span>
+          <span class="rc-swap-arr">→</span>
+          <span class="rc-swap-new">${nov.emoji} ${nov.nome}</span>
+        </div>
+        ${diffs?`<div class="rc-swap-diffs">${diffs}</div>`:""}
+      </div>${efeitoDesc}`;
+    }
+    const hideCtxDesc=r.tipo==="peca_swap"||r.tipo==="evolucao";
+    card.innerHTML=`<span class="rc-e">${r.emoji}</span><div style="flex:1;min-width:0"><div class="rc-l">${r.label}</div>${r.ctx&&!hideCtxDesc?`<div class="rc-ctx">${r.ctx}</div>`:""}${r.desc&&!hideCtxDesc?`<div class="rc-d">${r.desc}</div>`:""}${extraHtml}</div>`;
     card.addEventListener("click",()=>{
       grid.querySelectorAll(".rc").forEach(c=>c.classList.remove("rc-sel"));
       card.classList.add("rc-sel");
@@ -1461,17 +1785,34 @@ function mostrarPreviewRecomp(r,div,recompensasRestantes=1){
   let descExtra="";
 
   if(r.tipo==="stat_boost"){depois[r.stat]+=r.valor}
-  else if(r.tipo==="full_heal"){depois.hp+=30}
   else if(r.tipo==="peca_swap"){
     const v=PECAS[m.pecas[r.slot]],n=r.peca;
     if(v){depois.hp-=v.stats.hp;depois.atk-=v.stats.atk;depois.def-=v.stats.def;depois.spd-=v.stats.spd}
     if(n){depois.hp+=n.stats.hp;depois.atk+=n.stats.atk;depois.def+=n.stats.def;depois.spd+=n.stats.spd}
     depois.hp=Math.max(10,depois.hp);depois.atk=Math.max(1,depois.atk);
-    const nomeV=v?v.nome:"(vazio)";
-    descExtra=`<div class="rc-prev-troca">${r.emoji} <s style="color:var(--muted)">${nomeV}</s> → <b>${r.peca.nome}</b></div>`;
+    // Mostra os stats individuais das duas peças para comparação
+    const fmtStats=(p)=>p?["hp","atk","def","spd"].filter(k=>p.stats[k]!==0).map(k=>`${{hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"}[k]}${p.stats[k]>0?"+":""}${p.stats[k]}`).join(" "):"—";
+    descExtra=`<div class="rc-prev-troca" style="font-size:.76rem">
+      <div style="margin-bottom:3px">${v?v.emoji+" "+v.nome:"(vazio)"} <span style="color:var(--muted);font-size:.7rem">${fmtStats(v)}</span></div>
+      <div style="color:var(--muted);margin-bottom:3px">↓</div>
+      <div>${r.peca.emoji} <b>${r.peca.nome}</b> <span style="color:var(--accent);font-size:.7rem">${fmtStats(n)}</span></div>
+    </div>`;
+  }
+  else if(r.tipo==="evolucao"){
+    const v=r.pecaVelha,n=r.pecaNova;
+    if(v){depois.hp-=v.stats.hp;depois.atk-=v.stats.atk;depois.def-=v.stats.def;depois.spd-=v.stats.spd}
+    if(n){depois.hp+=n.stats.hp;depois.atk+=n.stats.atk;depois.def+=n.stats.def;depois.spd+=n.stats.spd}
+    depois.hp=Math.max(10,depois.hp);depois.atk=Math.max(1,depois.atk);
+    const fmtStats=(p)=>p?["hp","atk","def","spd"].filter(k=>p.stats[k]!==0).map(k=>`${{hp:"❤️",atk:"⚔️",def:"🛡️",spd:"⚡"}[k]}${p.stats[k]>0?"+":""}${p.stats[k]}`).join(" "):"—";
+    descExtra=`<div class="rc-prev-troca" style="border-color:rgba(251,191,36,.25);font-size:.76rem">
+      <div style="margin-bottom:3px">${v.emoji} ${v.nome} <span style="color:var(--muted);font-size:.7rem">${fmtStats(v)}</span></div>
+      <div style="color:#fbbf24;margin-bottom:3px">⬆️ evolui para</div>
+      <div>${n.emoji} <b style="color:#fbbf24">${n.nome}</b> <span style="color:var(--accent);font-size:.7rem">${fmtStats(n)}</span></div>
+      ${n.descricao?`<div style="color:var(--muted);font-size:.7rem;margin-top:4px">✨ ${n.descricao}</div>`:""}
+    </div>`;
   }
   else if(r.tipo==="reliquia"){
-    descExtra=`<div class="rc-prev-troca">💎 Novo efeito: <b>${r.reliquia.ef}</b></div>`;
+    descExtra=`<div class="rc-prev-troca">💎 ${r.reliquia.desc}</div>`;
   }
 
   function diff(a,b){

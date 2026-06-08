@@ -83,7 +83,7 @@ function batalhar(monsterA, monsterB) {
 }
 
 function calcularDano(atacante, defensor) {
-  const base = Math.max(1, atacante.atk - Math.floor(defensor.def * 0.5));
+  const base = Math.max(1, atacante.atk - Math.floor(defensor.def * 0.75));
   const variacao = Math.floor(Math.random() * 5) - 2; // -2 a +2
   return Math.max(1, base + variacao);
 }
@@ -116,13 +116,15 @@ function adicionarDoT(alvo, dot) {
 function processarDoT(alvo, log) {
   for (const dot of alvo.dots) {
     if (dot.turnosRestantes <= 0) continue;
-    alvo.hp -= dot.dano;
+    const absorb = Math.floor(alvo.def * 0.2);
+    const dReal  = Math.max(1, dot.dano - absorb);
+    alvo.hp -= dReal;
     dot.turnosRestantes--;
     log.push({
       tipo: "dot",
       efeito: dot.tipo,
       nome: alvo.nome,
-      dano: dot.dano,
+      dano: dReal,
       hpAtual: Math.max(0, alvo.hp),
     });
   }
